@@ -184,10 +184,10 @@ export const ContactAndTeamSection: React.FC = () => {
                   <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-bold text-uday-midnight">Portal & Technical Lead</div>
-                  <div className="text-uday-midnight/80">Sayandeep Biswas</div>
-                  <a href="mailto:sayandeep.biswas04@gmail.com" className="text-uday-orange hover:underline text-xs">
-                    sayandeep.biswas04@gmail.com
+                  <div className="font-bold text-uday-midnight">{EDITORIAL_BOARD.portalWebLead.role}</div>
+                  <div className="text-uday-midnight/80">{EDITORIAL_BOARD.portalWebLead.name}</div>
+                  <a href={`mailto:${EDITORIAL_BOARD.portalWebLead.email}`} className="text-uday-orange hover:underline text-xs">
+                    {EDITORIAL_BOARD.portalWebLead.email}
                   </a>
                 </div>
               </div>
