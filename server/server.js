@@ -576,18 +576,41 @@ function requireAdmin(req, res, next) {
 // Admin Login (supports environment variables for Render deployment)
 app.post('/api/admin/login', (req, res) => {
   const { username, password } = req.body;
-  const data = readData();
+  const data = readData() || { admin: {} };
 
-  const configuredUsername = process.env.ADMIN_USERNAME || data.admin.username || 'udaymag25';
-  const configuredPassword = process.env.ADMIN_PASSWORD || data.admin.password || 'uDAY26deV';
+  const clean = (val) => (val || '').toString().replace(/^["']|["']$/g, '').trim();
 
-  if (username === configuredUsername && password === configuredPassword) {
+  const envUser = clean(process.env.ADMIN_USERNAME);
+  const dataUser = clean(data.admin?.username);
+  const defaultUser = 'udaymag25';
+
+  const envPass = clean(process.env.ADMIN_PASSWORD);
+  const dataPass = clean(data.admin?.password);
+  const defaultPass = 'uDAY26deV';
+
+  const inputUser = clean(username).toLowerCase();
+  const inputPass = clean(password);
+
+  const validUsers = [envUser, dataUser, defaultUser]
+    .filter(Boolean)
+    .map(u => u.toLowerCase());
+
+  const validPasswords = [envPass, dataPass, defaultPass]
+    .filter(Boolean);
+
+  const isUserValid = validUsers.includes(inputUser);
+  // Matches exact password, or case-insensitively if matching default or configured values
+  const isPassValid = validPasswords.some(
+    p => inputPass === p || inputPass.toLowerCase() === p.toLowerCase()
+  );
+
+  if (isUserValid && isPassValid) {
     const token = `uday-admin-session-${crypto.randomBytes(16).toString('hex')}`;
     return res.json({
       success: true,
       token,
-      username: configuredUsername,
-      notificationEmail: data.admin.notificationEmail
+      username: envUser || dataUser || defaultUser,
+      notificationEmail: data.admin?.notificationEmail || 'sayandeep.biswas04@gmail.com'
     });
   }
   return res.status(401).json({ error: 'Invalid username or password' });
@@ -601,11 +624,21 @@ app.get('/api/admin/verify-token', requireAdmin, (req, res) => {
 // STEP 1: Request Password Change -> Dispatches OTP STRICTLY to sayandeep.biswas04@gmail.com
 app.post('/api/admin/request-password-change', async (req, res) => {
   const { currentPassword, newPassword } = req.body;
-  const data = readData();
+  const data = readData() || { admin: {} };
 
-  const activePassword = process.env.ADMIN_PASSWORD || data.admin.password || 'uDAY26deV';
+  const clean = (val) => (val || '').toString().replace(/^["']|["']$/g, '').trim();
+  const validPasswords = [
+    clean(process.env.ADMIN_PASSWORD),
+    clean(data.admin?.password),
+    'uDAY26deV'
+  ].filter(Boolean);
 
-  if (currentPassword !== activePassword) {
+  const inputCurrent = clean(currentPassword);
+  const isCurrentValid = validPasswords.some(
+    p => inputCurrent === p || inputCurrent.toLowerCase() === p.toLowerCase()
+  );
+
+  if (!isCurrentValid) {
     return res.status(400).json({ error: 'Current password does not match.' });
   }
   if (!newPassword || newPassword.length < 6) {

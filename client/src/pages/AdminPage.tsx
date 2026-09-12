@@ -3,7 +3,7 @@ import {
   Lock, Shield, BookOpen, Feather, Image as ImageIcon, MessageSquare,
   Key, LogOut, Check, Clock, Trash2, ExternalLink, Mail, FolderUp,
   PlusCircle, Download, RefreshCw, AlertCircle, CheckCircle2, Upload, FileText,
-  Users, UserCheck, Edit3, Plus, Save, Phone, MapPin
+  Users, UserCheck, Edit3, Plus, Save, Phone, MapPin, Eye, EyeOff
 } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 import { EDITORIAL_BOARD, TeamAndContact, LeadTeamMember } from '../data/publicationData';
@@ -14,6 +14,7 @@ export const AdminPage: React.FC = () => {
   // Login input fields start COMPLETELY BLANK for security
   const [usernameInput, setUsernameInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -556,7 +557,10 @@ export const AdminPage: React.FC = () => {
                 type="text"
                 required
                 autoComplete="off"
-                placeholder="Enter admin username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
+                placeholder="Enter admin username (e.g. udaymag25)"
                 value={usernameInput}
                 onChange={e => setUsernameInput(e.target.value)}
                 className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-4 py-3 text-sm text-uday-midnight focus:outline-none focus:border-uday-crimson"
@@ -567,15 +571,28 @@ export const AdminPage: React.FC = () => {
               <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">
                 Password
               </label>
-              <input
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder="Enter admin password"
-                value={passwordInput}
-                onChange={e => setPasswordInput(e.target.value)}
-                className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-4 py-3 text-sm text-uday-midnight focus:outline-none focus:border-uday-crimson"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  placeholder="Enter admin password"
+                  value={passwordInput}
+                  onChange={e => setPasswordInput(e.target.value)}
+                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl pl-4 pr-11 py-3 text-sm text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-uday-midnight/40 hover:text-uday-midnight transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button
