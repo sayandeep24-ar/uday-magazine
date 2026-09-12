@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: uday-magazine
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_USERNAME
+        value: udaymag25
+      - key: ADMIN_PASSWORD
+        value: uDAY26deV
+      - key: NOTIFICATION_EMAIL
+        value: sayandeep.biswas04@gmail.com

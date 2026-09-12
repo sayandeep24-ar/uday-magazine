@@ -1,0 +1,386 @@
+{
+  "admin": {
+    "username": "udaymag25",
+    "password": "uDAY26deV",
+    "notificationEmail": "sayandeep.biswas04@gmail.com",
+    "pendingPasswordReset": null
+  },
+  "settings": {
+    "googleSheetsWebhookUrl": "",
+    "driveFolderEmbedUrl": ""
+  },
+  "announcements": [
+    {
+      "id": "ann-1",
+      "text": "📢 Call for Submissions for Uday Volume 12 is now OPEN! Send your poems, articles, photo-essays, and artwork.",
+      "tag": "SUBMISSIONS",
+      "active": true
+    },
+    {
+      "id": "ann-2",
+      "text": "✨ Volume 11: 'The Ascent' official magazine edition is available to read & download!",
+      "tag": "NEW RELEASE",
+      "active": true
+    },
+    {
+      "id": "ann-3",
+      "text": "🎙️ Open Mic & Chai Evening this Friday at 6:30 PM at the LHC Amphitheatre.",
+      "tag": "EVENT",
+      "active": true
+    }
+  ],
+  "magazines": [
+    {
+      "id": "mag-vol-11",
+      "volumeNumber": 11,
+      "year": 2024,
+      "title": "The Ascent",
+      "theme": "The Changing Seasons & Classical Indian Ragas (Hindol, Deepak, Megha, Shri)",
+      "coverImage": "/uday-logo.jpg",
+      "pdfUrl": "/uploads/uday-volume-11-the-ascent.pdf",
+      "editorInChief": "Aayush Anand",
+      "pagesCount": 84,
+      "releaseDate": "April 2024",
+      "description": "Constructed around the motif of the changing seasons and Indian Classical Ragas. Features original investigative journalism, multilingual poetry (English, Hindi, Marathi, Bengali), campus photography, and student fine art.",
+      "isLatest": true
+    }
+  ],
+  "blogs": [
+    {
+      "id": "blog-1789231423295-fd6a14",
+      "title": "Reflections by the Library Lawn",
+      "author": "Priya Sharma",
+      "email": "priya.s23@iiserb.ac.in",
+      "category": "Campus Musings",
+      "tags": [
+        "Community"
+      ],
+      "excerpt": "A short note on quiet study hours during exam week.",
+      "content": "The afternoon light cuts across the green carpet of grass...",
+      "coverImage": "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&auto=format&fit=crop&q=80",
+      "status": "approved",
+      "approveToken": "5d6794aeacf53b94247b2f86a5aaafac",
+      "rejectToken": "aa6cd0b30d3f54f413ba7e5db1dcac80",
+      "submittedAt": 1789231423295,
+      "approvedAt": 1789231423299,
+      "expiresAt": 1791823423299
+    },
+    {
+      "id": "blog-101",
+      "title": "The Quantum Symphony: Where Physics Meets Free Verse",
+      "author": "Rohan Deshmukh",
+      "email": "rohan.d22@iiserb.ac.in",
+      "category": "Science & Poetry",
+      "tags": [
+        "Physics",
+        "Philosophy",
+        "IISERB"
+      ],
+      "excerpt": "Exploring how wave-particle duality parallels the dual state of human emotion in solitary campus nights.",
+      "content": "In the silent corridors of the Physical Sciences building at 2 AM, the hum of vacuum pumps sounds eerily rhythmic. We often treat physics as the language of cold certitudes, equations carved in quartz. But Heisenberg didn't just calculate probabilities; he uncovered a foundational humility in nature. Just as an electron cannot have both its position and momentum simultaneously pinned down without blur, our interior lives refuse singular categorization. We are at once stationary and in transit, dreaming of published preprints while mourning lost afternoons by the campus lake.",
+      "coverImage": "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=800&auto=format&fit=crop&q=80",
+      "status": "approved",
+      "submittedAt": 1789100000000,
+      "approvedAt": 1789120000000,
+      "expiresAt": 1791712000000
+    },
+    {
+      "id": "blog-102",
+      "title": "Monsoon Shadows Along Bhauri Lake",
+      "author": "Tanvi Sharma",
+      "email": "tanvi.s@iiserb.ac.in",
+      "category": "Campus Musings",
+      "tags": [
+        "Campus",
+        "Nature",
+        "Photography"
+      ],
+      "excerpt": "A visual and meditative walk through the quiet outskirts of Bhopal when the grey skies open up.",
+      "content": "The raindrops hit the dry basalt of the Vindhyan plateau with an unmistakable earthy fragrance—petrichor distilled through centuries of wild grass. On monsoon afternoons, bicycles line up under the library porch while students watch grey sheets of water veil the hostel towers. There is something profoundly restorative about being grounded in a place where science thrives amidst untamed wilderness.",
+      "coverImage": "https://images.unsplash.com/photo-1519692933481-e162a57d6721?w=800&auto=format&fit=crop&q=80",
+      "status": "approved",
+      "submittedAt": 1788900000000,
+      "approvedAt": 1788920000000,
+      "expiresAt": 1791512000000
+    },
+    {
+      "id": "blog-103",
+      "title": "On Translation and the Untranslatable: Reading Manto in the Lab",
+      "author": "Aarav Banerjee",
+      "email": "aarav.b21@iiserb.ac.in",
+      "category": "Literature",
+      "tags": [
+        "Translation",
+        "Urdu",
+        "Literature"
+      ],
+      "excerpt": "What happens when you bring Saadat Hasan Manto's unsparing prose into the sterile light of a chemistry laboratory?",
+      "content": "Every language guards its own grief. When translating nuances of subcontinental grief into English prose, one feels like a chromatographer struggling with overlapping retention times. Manto wrote not for gentle sensibilities but to hold a mirror against collective delirium. As student scientists, our obligation to truth must mirror his—unflinching, observant, and humane.",
+      "coverImage": "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&auto=format&fit=crop&q=80",
+      "status": "pending",
+      "submittedAt": 1789180000000,
+      "approvedAt": null,
+      "expiresAt": null
+    }
+  ],
+  "feedback": [
+    {
+      "id": "fb-1",
+      "name": "Devika Pillai",
+      "email": "devika.p@iiserb.ac.in",
+      "rollOrDept": "Biological Sciences, MS21",
+      "category": "Magazine Content",
+      "rating": 5,
+      "message": "The theme of Ragas in Volume 11 is breathtaking! The pairing of classical paintings with student poetry was truly inspiring.",
+      "timestamp": 1789100000000
+    }
+  ],
+  "events": {
+    "upcoming": [
+      {
+        "id": "ev-1",
+        "title": "Uday Vol. 12 Submissions Deadline",
+        "category": "Call for Entries",
+        "date": "October 20, 2026",
+        "time": "11:59 PM IST",
+        "venue": "Online Portal / Email Submission",
+        "description": "Submit articles, poetry in any language, investigative reports, photographic essays, and cover art proposals for the upcoming annual print edition.",
+        "badge": "Deadline",
+        "cta": "Submit Entry"
+      },
+      {
+        "id": "ev-2",
+        "title": "Chai & Chhand: Open Mic Poetry & Spoken Word",
+        "category": "Live Performance",
+        "date": "September 25, 2026",
+        "time": "06:30 PM - 08:30 PM",
+        "venue": "Lecture Hall Complex Amphitheatre",
+        "description": "An intimate evening of original student poetry, acoustic music, and hot chai under the monsoon stars. Open to all campus residents.",
+        "badge": "Campus Event",
+        "cta": "RSVP Free"
+      },
+      {
+        "id": "ev-3",
+        "title": "Workshop: Science Storytelling & Non-Fiction Writing",
+        "category": "Workshop",
+        "date": "October 08, 2026",
+        "time": "03:00 PM - 05:30 PM",
+        "venue": "Senate Hall, Administration Block",
+        "description": "Led by renowned science communicators and faculty mentors. Learn how to transform complex research papers into gripping narratives.",
+        "badge": "Masterclass",
+        "cta": "Register Seat"
+      }
+    ],
+    "past": [
+      {
+        "id": "pev-1",
+        "title": "Launch Gala: Uday Volume 11 'The Ascent'",
+        "date": "April 18, 2024",
+        "venue": "Main Auditorium, IISER Bhopal",
+        "image": "https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80",
+        "description": "The grand unveiling of Volume 11 by Chief Guest Dr. Renny Thomas and the editorial board. Included live raga performances, art displays, and multilingual poetry recitals.",
+        "attendees": "350+ Students & Faculty"
+      },
+      {
+        "id": "pev-2",
+        "title": "The Golden Hour: Campus Photography & Sketch Walk",
+        "date": "February 10, 2024",
+        "venue": "Campus Lake & Bhauri Hills",
+        "image": "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=800&auto=format&fit=crop&q=80",
+        "description": "An afternoon creative expedition capturing the flora, birds, architectural vistas, and changing light of the IISER Bhopal campus.",
+        "attendees": "85 Enthusiasts"
+      },
+      {
+        "id": "pev-3",
+        "title": "LitFest Panel: The Ethics of Academic Publishing",
+        "date": "November 22, 2023",
+        "venue": "LHC Room 101",
+        "image": "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=800&auto=format&fit=crop&q=80",
+        "description": "Panel discussion examining peer review bias, accessibility in scientific publications, and student journalism.",
+        "attendees": "160 Attendees"
+      }
+    ]
+  },
+  "gallery": [
+    {
+      "id": "gal-1",
+      "title": "Golden Bloom by the Faculty Quarters",
+      "artist": "Pratigya Kujur",
+      "category": "Photography",
+      "date": "Spring 2024",
+      "url": "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?w=1000&auto=format&fit=crop&q=80",
+      "description": "Cassia fistula (Amaltas) dripping in liquid sunshine against a serene IISERB sky."
+    },
+    {
+      "id": "gal-2",
+      "title": "The Ancient Archways",
+      "artist": "Deep Jangle",
+      "category": "Photography",
+      "date": "Vol 11 Feature",
+      "url": "https://images.unsplash.com/photo-1599837565318-67429bde7162?w=1000&auto=format&fit=crop&q=80",
+      "description": "Sienna corridors capturing the timeless dialogue between heritage brick and shadow."
+    },
+    {
+      "id": "gal-3",
+      "title": "Blossoms in Twilight",
+      "artist": "Sneha Shree",
+      "category": "Photography",
+      "date": "Vol 11 Feature",
+      "url": "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=1000&auto=format&fit=crop&q=80",
+      "description": "Lilac blossoms set against evening clouds, echoing the melodies of Hindol."
+    },
+    {
+      "id": "gal-4",
+      "title": "Botanical Sunroom & Shadows",
+      "artist": "Vibha Dinesh Udupa",
+      "category": "Artwork",
+      "date": "Watercolor, 2024",
+      "url": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=1000&auto=format&fit=crop&q=80",
+      "description": "Vibrant watercolor depiction of plant nursery conservatory with delicate wash gradients."
+    },
+    {
+      "id": "gal-5",
+      "title": "The Gaze of Solitude",
+      "artist": "Advait Kulkarni",
+      "category": "Artwork",
+      "date": "Acrylic on Canvas",
+      "url": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1000&auto=format&fit=crop&q=80",
+      "description": "Expressive portrait exploring introspective stillness, featured in Section 6 Artwork."
+    },
+    {
+      "id": "gal-6",
+      "title": "Mandala of the Dawn Sun",
+      "artist": "Vaidehi Joshi",
+      "category": "Artwork",
+      "date": "Traditional Ink & Acrylic",
+      "url": "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1000&auto=format&fit=crop&q=80",
+      "description": "Intricate circular motif drawing inspiration from the morning sun and Indian sacred geometry."
+    }
+  ],
+  "emailLogs": [
+    {
+      "id": "email-1789231423301-6dac3a",
+      "to": "sayandeep.biswas04@gmail.com",
+      "subject": "[UDAY Security Alert] Admin Password Change Verification Code: 148837",
+      "text": "Your Uday Magazine Admin Password Verification Code is: 148837. Valid for 15 minutes.",
+      "html": "\n    <div style=\"font-family: 'Georgia', serif; max-width: 580px; margin: 0 auto; background: #FAF7F2; border: 2px solid #E75562; border-radius: 12px; overflow: hidden; padding: 24px;\">\n      <div style=\"text-align: center; margin-bottom: 20px;\">\n        <h1 style=\"color: #E75562; margin: 0; font-size: 24px;\">UDAY MAGAZINE SECURITY</h1>\n        <p style=\"color: #666; margin-top: 4px;\">Password Change Authorization</p>\n      </div>\n      <div style=\"background: white; padding: 24px; border-radius: 8px; text-align: center; border: 1px solid #FFCB99;\">\n        <p style=\"font-size: 15px; color: #333; margin-top: 0;\">\n          A request has been initiated to change the administrator password for user <strong>udaymag25</strong>.\n        </p>\n        <div style=\"margin: 20px 0; background: #FFF4E6; border: 2px dashed #FF9A66; padding: 16px; border-radius: 8px;\">\n          <span style=\"font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #E75562;\">148837</span>\n        </div>\n        <p style=\"font-size: 13px; color: #666;\">\n          Enter this verification code in the admin dashboard to confirm your password change. This code expires in 15 minutes.\n        </p>\n      </div>\n      <p style=\"font-size: 12px; color: #888; text-align: center; margin-top: 20px;\">\n        If you did not initiate this change, do not share this code.\n      </p>\n    </div>\n  ",
+      "metadata": {
+        "type": "password_reset_otp"
+      },
+      "sentAt": "2026-09-12T16:43:43.301Z",
+      "status": "dispatched"
+    },
+    {
+      "id": "email-1789231423296-5c61fe",
+      "to": "sayandeep.biswas04@gmail.com",
+      "subject": "[UDAY Review Required] New Blog Submission: \"Reflections by the Library Lawn\" by Priya Sharma",
+      "text": "New blog submitted: \"Reflections by the Library Lawn\" by Priya Sharma. Approve URL: http://localhost:5001/api/blogs/approve?id=blog-1789231423295-fd6a14&token=5d6794aeacf53b94247b2f86a5aaafac | Reject URL: http://localhost:5001/api/blogs/reject?id=blog-1789231423295-fd6a14&token=aa6cd0b30d3f54f413ba7e5db1dcac80",
+      "html": "\n      <div style=\"font-family: 'Georgia', serif; max-width: 620px; margin: 0 auto; background: #FAF7F2; border: 1px solid #FFCB99; border-radius: 12px; overflow: hidden; padding: 24px;\">\n        <div style=\"text-align: center; margin-bottom: 20px;\">\n          <h1 style=\"color: #E75562; margin: 0; font-size: 26px; letter-spacing: 2px;\">UDAY MAGAZINE</h1>\n          <p style=\"color: #4E8097; font-style: italic; margin-top: 4px;\">Editorial Review & Approval Desk</p>\n        </div>\n        <div style=\"background: #FFFFFF; padding: 20px; border-radius: 8px; border-left: 4px solid #FF9A66; margin-bottom: 20px;\">\n          <h2 style=\"color: #141E28; margin-top: 0;\">Reflections by the Library Lawn</h2>\n          <p style=\"color: #666; font-size: 14px; margin-bottom: 8px;\">\n            <strong>Author:</strong> Priya Sharma (priya.s23@iiserb.ac.in)<br>\n            <strong>Category:</strong> Campus Musings | <strong>Submitted:</strong> 9/12/2026, 10:13:43 PM\n          </p>\n          <div style=\"background: #FFFDF9; border: 1px dashed #FFCB99; padding: 12px; border-radius: 6px; font-style: italic; color: #444;\">\n            \"A short note on quiet study hours during exam week.\"\n          </div>\n          <div style=\"margin-top: 16px; font-size: 14px; line-height: 1.6; color: #333; max-height: 250px; overflow-y: auto;\">\n            The afternoon light cuts across the green carpet of grass...\n          </div>\n        </div>\n        \n        <p style=\"font-size: 14px; color: #555; text-align: center; margin: 20px 0 10px;\">\n          <strong>Approval Policy:</strong> Approving this piece will immediately feature it on the Uday Community Blogs portal for <strong>30 days (1 month)</strong>.\n        </p>\n\n        <div style=\"text-align: center; margin: 24px 0;\">\n          <a href=\"http://localhost:5001/api/blogs/approve?id=blog-1789231423295-fd6a14&token=5d6794aeacf53b94247b2f86a5aaafac\" style=\"background-color: #6E9B72; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 12px; display: inline-block;\">\n            ✓ Approve & Feature for 30 Days\n          </a>\n          <a href=\"http://localhost:5001/api/blogs/reject?id=blog-1789231423295-fd6a14&token=aa6cd0b30d3f54f413ba7e5db1dcac80\" style=\"background-color: #E75562; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;\">\n            ✕ Decline Piece\n          </a>\n        </div>\n\n        <p style=\"font-size: 12px; color: #888; text-align: center; margin-top: 24px; border-top: 1px solid #EEE; padding-top: 12px;\">\n          UDAY Magazine Review Notice | Sent to sayandeep.biswas04@gmail.com | Manage in Admin Portal using udaymag25\n        </p>\n      </div>\n    ",
+      "metadata": {
+        "blogId": "blog-1789231423295-fd6a14",
+        "type": "blog_approval_request"
+      },
+      "sentAt": "2026-09-12T16:43:43.296Z",
+      "status": "dispatched"
+    }
+  ],
+  "teamAndContact": {
+    "facultyAdvisor": {
+      "name": "Dr. Renny Thomas",
+      "designation": "Faculty Advisor",
+      "department": "Assistant Professor, Department of Humanities and Social Sciences (HSS), IISER Bhopal",
+      "email": "renny@iiserb.ac.in",
+      "tenure": "Current"
+    },
+    "portalWebLead": {
+      "name": "Souradip",
+      "role": "Portal & Web Lead",
+      "email": "sayandeep.biswas04@gmail.com",
+      "bio": "Oversees the web architecture, digital publications, and portal infrastructure for UDAY Magazine."
+    },
+    "contactDetails": {
+      "officialEmail": "udaymagz@iiserb.ac.in",
+      "contactPhone": "+91 (0755) 269-2400",
+      "campusLocation": "Indian Institute of Science Education and Research (IISER) Bhopal, Bhopal Bypass Road, Bhauri, Bhopal - 462066, Madhya Pradesh, India",
+      "officeRoom": "Institute Magazine Office, SAC Building, IISER Bhopal",
+      "consultationHours": "Mon-Fri, 4:00 PM – 6:00 PM",
+      "copyrightNotice": "Designed & Developed by Souradip & Sayandeep. © 2024 UDAY Magazine. IISER Bhopal. All rights reserved."
+    },
+    "leadTeam": [
+      {
+        "id": "lead-1",
+        "name": "Aayush Anand",
+        "role": "Editor-in-Chief",
+        "major": "Chemistry Major",
+        "bio": "Although he is majoring in Chemistry, Aayush has a special fondness for languages and literature. If you don't find him reading a book, you will definitely find him adding one to his cart."
+      },
+      {
+        "id": "lead-2",
+        "name": "Anamika Singh",
+        "role": "Hindi Editor-in-Chief",
+        "major": "Economics Major",
+        "bio": "Her interests lie in contributing to solutions seeking empowerment of women and challenging social norms. She finds solace in poetry and verses capturing human triumph."
+      },
+      {
+        "id": "lead-3",
+        "name": "Maya Katti",
+        "role": "Head of Reports",
+        "major": "Biological Sciences Major",
+        "bio": "Will stop you every minute to look at a bird. Her knack for meticulous organization keeps her grounded, observing every nuance of campus life."
+      },
+      {
+        "id": "lead-4",
+        "name": "Geethanjli R",
+        "role": "PR and Social Media Head",
+        "major": "Student Ambassador",
+        "bio": "Can chat for hours with friends, bringing stories to life across institute portals and public dialogues."
+      },
+      {
+        "id": "lead-5",
+        "name": "Raj Mishra",
+        "role": "Design Head",
+        "major": "Physics Major",
+        "bio": "Highly interested in biophysics and cinema. Translates aesthetic balance and rhythm onto every printed page of Uday."
+      },
+      {
+        "id": "lead-6",
+        "name": "Souradip",
+        "role": "Portal & Web Lead",
+        "major": "Web & Systems Architect",
+        "bio": "Lead developer for the UDAY Magazine digital portal, archive databases, and online release platform."
+      }
+    ],
+    "editorialEnglish": [
+      "Siddhant Patra",
+      "Kaustubh Nyati",
+      "Kshitij Dalal",
+      "Kritika Pahilajani",
+      "Sneha Shree",
+      "Akshat Pandey",
+      "Sreejit Bakshi"
+    ],
+    "editorialHindi": [
+      "Himanshu Mishra",
+      "Kshitij Dalal",
+      "Vaishnavi Tripathi",
+      "Ishita Borthakur",
+      "Aadarsh"
+    ],
+    "reporters": [
+      "Chirag Sharma",
+      "Samba Siva Reddy",
+      "Ilesha Ojha",
+      "P S Rishi",
+      "Aditya Pratap Singh"
+    ],
+    "designers": [
+      "Neeshma K P",
+      "Abhishek Thakur"
+    ],
+    "studentAdvisors": [
+      "Hitaishi Desai",
+      "Md Ishaque Khan"
+    ],
+    "lastUpdated": "2026-09-12T17:16:46.162Z"
+  }
+}
