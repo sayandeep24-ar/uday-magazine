@@ -43,7 +43,7 @@ app.get('/robots.txt', (req, res) => {
 });
 
 app.get('/sitemap.xml', (req, res) => {
-  res.type('application/xml');
+  res.setHeader('Content-Type', 'text/xml; charset=utf-8');
   res.sendFile(path.join(__dirname, '../public/sitemap.xml'));
 });
 
