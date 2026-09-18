@@ -1,0 +1,17 @@
+name: Keep Render Service Awake
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free tier from sleeping (sleep threshold is 15 mins)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping UDAY Magazine Render Health Check
+        run: |
+          echo "Pinging Uday Magazine Render service to keep it awake..."
+          curl -s -f -m 30 "https://uday-magazine.onrender.com/api/health" || true
+          echo "Ping complete."
