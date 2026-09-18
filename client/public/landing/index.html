@@ -335,13 +335,26 @@
     /* Words: WAKE UP -> WRITE -> CLICK -> DRAW -> THINK -> UDAY */
     /* ========================================================= */
     .text-stage {
-      min-height: 140px;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+    }
+
+    .words-carousel {
       position: relative;
       width: 100%;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (min-width: 640px) {
+      .words-carousel {
+        height: 105px;
+      }
     }
 
     .word-display {
@@ -406,13 +419,18 @@
       }
     }
 
-    /* Subtitle & Tagline revealed with UDAY */
+    /* Subtitle & Tagline revealed strictly BELOW UDAY...... */
     .uday-sub-block {
       opacity: 0;
-      transform: translateY(15px);
+      transform: translateY(12px);
       transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
-      margin-top: 1.25rem;
+      margin-top: 1.75rem;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .uday-sub-block.visible {
@@ -633,12 +651,14 @@
 
     <!-- Poetic Slogan Words Sequence -->
     <div class="text-stage">
-      <div class="word-display" id="word-0">WAKE UP</div>
-      <div class="word-display" id="word-1">WRITE</div>
-      <div class="word-display" id="word-2">CLICK</div>
-      <div class="word-display" id="word-3">DRAW</div>
-      <div class="word-display" id="word-4">THINK</div>
-      <div class="word-display word-uday" id="word-5">UDAY......</div>
+      <div class="words-carousel">
+        <div class="word-display" id="word-0">WAKE UP</div>
+        <div class="word-display" id="word-1">WRITE</div>
+        <div class="word-display" id="word-2">CLICK</div>
+        <div class="word-display" id="word-3">DRAW</div>
+        <div class="word-display" id="word-4">THINK</div>
+        <div class="word-display word-uday" id="word-5">UDAY......</div>
+      </div>
 
       <div class="uday-sub-block" id="udaySubBlock">
         <div class="tagline-pill">The Voice of IISER Bhopal</div>
@@ -853,15 +873,13 @@
           udaySubBlock.classList.add('visible');
         }, 300);
 
-        // Show Enter button immediately
-        enterPortalBtn.classList.add('active');
-
         if (isServerAwake) {
+          enterPortalBtn.classList.add('active');
           progressFill.style.width = '100%';
           prepareLaunch();
         } else {
           // Keep checking Render in background, auto-launch once awake
-          statusText.textContent = 'Finishing setup... Click below or wait for auto-launch';
+          statusText.textContent = 'Awakening server... please wait (portal will open once online)';
         }
       }
 
@@ -879,14 +897,23 @@
         }, 1600);
       }
 
-      // Allow immediate click on Enter button
+      // Enter button click
       enterPortalBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        if (!isServerAwake) {
+          statusText.textContent = 'Server is still waking up... please wait a moment!';
+          return;
+        }
         window.location.href = targetBase;
       });
 
+      // Skip button click
       directSkipBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        if (!isServerAwake) {
+          statusText.textContent = 'Server is still waking up... please wait a moment!';
+          return;
+        }
         window.location.href = targetBase;
       });
 

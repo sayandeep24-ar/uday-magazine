@@ -23,8 +23,12 @@ export const RenderWakeupLanding: React.FC<RenderWakeupLandingProps> = ({
   const startTimeRef = useRef<number>(Date.now());
   const words = ['WAKE UP', 'WRITE', 'CLICK', 'DRAW', 'THINK', 'UDAY......'];
 
-  // Handle entering the main portal
+  // Handle entering the main portal (guarded by isServerAwake)
   const handleProceed = () => {
+    if (!isServerAwake) {
+      setStatusMessage('Server is still waking up... please wait a moment!');
+      return;
+    }
     setIsExiting(true);
     setTimeout(() => {
       if (onEnter) {
@@ -187,42 +191,47 @@ export const RenderWakeupLanding: React.FC<RenderWakeupLandingProps> = ({
         </div>
 
         {/* Dynamic Slogan Words Area */}
-        <div className="min-h-[140px] flex flex-col items-center justify-center relative w-full">
-          {words.map((word, idx) => {
-            const isActive = currentWordIndex === idx;
-            const isUday = idx === words.length - 1;
+        <div className="w-full flex flex-col items-center justify-center">
+          {/* Dedicated Word Display Box with fixed comfortable height */}
+          <div className="relative h-20 sm:h-28 w-full flex items-center justify-center">
+            {words.map((word, idx) => {
+              const isActive = currentWordIndex === idx;
+              const isUday = idx === words.length - 1;
 
-            if (!isActive) return null;
+              if (!isActive) return null;
 
-            return (
-              <div
-                key={word}
-                className={`transition-all duration-500 transform animate-scaleUp ${
-                  isUday
-                    ? 'font-serif text-4xl sm:text-6xl tracking-widest font-black bg-gradient-to-r from-[#FFF0DB] via-[#FF9A66] to-[#E75562] bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(255,154,102,0.6)]'
-                    : 'text-4xl sm:text-6xl font-black tracking-widest uppercase text-[#FAF7F2]'
-                }`}
-              >
-                {word}
+              return (
+                <div
+                  key={word}
+                  className={`transition-all duration-500 transform animate-scaleUp select-none ${
+                    isUday
+                      ? 'font-serif text-4xl sm:text-6xl tracking-widest font-black bg-gradient-to-r from-[#FFF0DB] via-[#FF9A66] to-[#E75562] bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(255,154,102,0.6)]'
+                      : 'text-4xl sm:text-6xl font-black tracking-widest uppercase text-[#FAF7F2]'
+                  }`}
+                >
+                  {word}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Subtitle & Tagline: Positioned cleanly BELOW the word, never overlapping */}
+          <div className="mt-4 sm:mt-6 min-h-[64px] flex flex-col items-center justify-center">
+            {currentWordIndex === words.length - 1 && (
+              <div className="flex flex-col items-center animate-fadeIn transition-opacity duration-700">
+                <span className="px-4 py-1.5 rounded-full bg-[#FF9A66]/15 border border-[#FF9A66]/30 text-[#FFCB99] text-xs sm:text-sm font-semibold tracking-wider uppercase mb-2 shadow-sm">
+                  The Voice of IISER Bhopal
+                </span>
+                <p className="font-serif italic text-gray-400 text-xs sm:text-sm">
+                  "Magna est veritas et praevalebit"
+                </p>
               </div>
-            );
-          })}
-
-          {/* Tagline revealed on UDAY...... */}
-          {hasAnimationFinished && (
-            <div className="mt-4 flex flex-col items-center animate-fadeIn">
-              <span className="px-3.5 py-1 rounded-full bg-[#FF9A66]/15 border border-[#FF9A66]/30 text-[#FFCB99] text-xs font-semibold tracking-wider uppercase mb-2">
-                The Voice of IISER Bhopal
-              </span>
-              <p className="font-serif italic text-gray-400 text-sm">
-                "Magna est veritas et praevalebit"
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Wakeup Status & Action Area */}
-        <div className="mt-12 flex flex-col items-center gap-4 w-full max-w-sm">
+        <div className="mt-8 sm:mt-10 flex flex-col items-center gap-4 w-full max-w-sm">
           
           {/* Loading Progress Bar */}
           <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
@@ -244,14 +253,28 @@ export const RenderWakeupLanding: React.FC<RenderWakeupLandingProps> = ({
             <span>{statusMessage}</span>
           </div>
 
-          {/* Enter Button */}
+          {/* Enter Button: Only active once server is online */}
           {hasAnimationFinished && (
             <button
               onClick={handleProceed}
-              className="mt-2 flex items-center justify-center gap-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-[#E75562] to-[#FF9A66] text-white text-sm font-bold uppercase tracking-widest shadow-[0_10px_30px_rgba(231,85,98,0.45)] hover:shadow-[0_14px_40px_rgba(231,85,98,0.65)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              disabled={!isServerAwake}
+              className={`mt-2 flex items-center justify-center gap-3 px-8 py-3.5 rounded-full text-sm font-bold uppercase tracking-widest transition-all ${
+                isServerAwake
+                  ? 'bg-gradient-to-r from-[#E75562] to-[#FF9A66] text-white shadow-[0_10px_30px_rgba(231,85,98,0.45)] hover:shadow-[0_14px_40px_rgba(231,85,98,0.65)] hover:scale-105 active:scale-95 cursor-pointer'
+                  : 'bg-white/10 text-gray-400 border border-white/15 cursor-not-allowed animate-pulse'
+              }`}
             >
-              <span>Enter Uday Portal</span>
-              <ArrowRight className="w-4 h-4" />
+              {isServerAwake ? (
+                <>
+                  <span>Enter Uday Portal</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <span>Waking up server... please wait</span>
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                </>
+              )}
             </button>
           )}
 
