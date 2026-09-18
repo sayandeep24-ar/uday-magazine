@@ -1,0 +1,20 @@
+# Robots.txt for UDAY Magazine - Official Magazine of IISER Bhopal
+# https://uday-magazine.onrender.com/
+
+User-agent: *
+Allow: /
+Allow: /magazines
+Allow: /blogs
+Allow: /gallery
+Allow: /events
+Allow: /feedback
+Allow: /contact
+Allow: /landing
+Allow: /gateway
+
+# Admin control suite
+Disallow: /admin
+Disallow: /api/admin/
+
+# Sitemaps
+Sitemap: https://uday-magazine.onrender.com/sitemap.xml

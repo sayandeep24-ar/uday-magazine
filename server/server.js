@@ -36,6 +36,17 @@ app.get(['/gateway', '/landing.html'], (req, res) => {
   res.sendFile(path.join(__dirname, '../landing/index.html'));
 });
 
+// Search Engine Optimization: Robots.txt & Sitemap.xml
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.sendFile(path.join(__dirname, '../public/robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.sendFile(path.join(__dirname, '../public/sitemap.xml'));
+});
+
 // Configure Multer for both image and PDF uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
