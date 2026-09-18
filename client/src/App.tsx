@@ -30,7 +30,10 @@ function ScrollToTop() {
 
 function AppContent() {
   const location = useLocation();
-  const isLanding = location.pathname === '/landing';
+  const [hasEnteredPortal, setHasEnteredPortal] = useState<boolean>(false);
+
+  const isExplicitLanding = location.pathname === '/landing';
+  const showLanding = isExplicitLanding || (location.pathname === '/' && !hasEnteredPortal);
   // Global data states
   const [blogs, setBlogs] = useState<BlogItem[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
@@ -105,11 +108,12 @@ function AppContent() {
     }
   };
 
-  if (isLanding) {
+  if (showLanding) {
     return (
-      <Routes>
-        <Route path="/landing" element={<RenderWakeupLanding targetPath="/" />} />
-      </Routes>
+      <RenderWakeupLanding
+        onEnter={() => setHasEnteredPortal(true)}
+        targetPath="/"
+      />
     );
   }
 

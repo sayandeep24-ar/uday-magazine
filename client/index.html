@@ -9,8 +9,33 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        background-color: #0B0F17;
+        margin: 0;
+      }
+      #root:empty {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0B0F17;
+      }
+      #root:empty::after {
+        content: '';
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: url('/uday-logo.png') center/contain no-repeat;
+        animation: initialPulse 1.2s infinite alternate ease-in-out;
+      }
+      @keyframes initialPulse {
+        0% { transform: scale(0.95); opacity: 0.6; filter: drop-shadow(0 0 15px rgba(255,154,102,0.3)); }
+        100% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 45px rgba(231,85,98,0.8)); }
+      }
+    </style>
   </head>
-  <body class="bg-[#FAF7F2] text-[#18232C] antialiased selection:bg-[#E75562] selection:text-white">
+  <body class="bg-[#0B0F17] text-[#18232C] antialiased selection:bg-[#E75562] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
