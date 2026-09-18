@@ -29,6 +29,12 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use('/public', express.static(path.join(__dirname, '../public')));
+app.use('/landing', express.static(path.join(__dirname, '../landing')));
+
+// Direct gateway endpoint for zero-latency landing page
+app.get(['/gateway', '/landing.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, '../landing/index.html'));
+});
 
 // Configure Multer for both image and PDF uploads
 const storage = multer.diskStorage({

@@ -41,6 +41,14 @@
 7. **Copyright**:
    - Explicitly attributed to **Souradip and Sayandeep** across the portal and footer.
 
+8. **Zero-Latency Landing Page (Render Cold-Start Masking)**:
+   - Eliminates the 30–60 second cold-start delay on Render free tiers when clicking public/social links.
+   - **Standalone Static Gateway (`landing/index.html`)**: Instant zero-bundle page deployable to GitHub Pages, Vercel, or custom CDN.
+   - **Logo Animation**: UDAY logo pulses and glows 3 times with radiant warm shockwaves.
+   - **Cinematic Typographic Sequence**: Sequentially displays **WAKE UP** → **WRITE** → **CLICK** → **DRAW** → **THINK** → **UDAY......**
+   - **Background Wakeup Engine**: Concurrently polls `/api/health` to spin up Render in the background; smoothly transitions to the portal once the server awakens.
+   - Also available inside the SPA via route `/landing` and direct server route `/gateway`.
+
 ---
 
 ## 🛠️ Deploying to Render in 3 Steps

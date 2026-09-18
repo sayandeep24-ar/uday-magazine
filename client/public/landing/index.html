@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UDAY Magazine — Awakening The Voice of IISER Bhopal</title>
+  <meta name="description" content="Official Magazine of the Indian Institute of Science Education and Research (IISER) Bhopal.">
+  <link rel="icon" type="image/png" href="uday-logo.png">
+
+  <!-- Google Fonts for Editorial Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;600;800;900&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-dark: #0B0F17;
+      --bg-card: rgba(20, 30, 40, 0.7);
+      --uday-orange: #FF9A66;
+      --uday-red: #E75562;
+      --uday-gold: #FFCB99;
+      --uday-green: #6E9B72;
+      --text-main: #FAF7F2;
+      --text-muted: #8E9BAE;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      selection-background-color: var(--uday-red);
+      selection-color: #fff;
+    }
+
+    /* Ambient Dawn / Aurora Background */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .aurora-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.35;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+
+    .blob-1 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, #E75562, transparent 70%);
+      top: -100px;
+      left: 15%;
+      animation-duration: 12s;
+    }
+
+    .blob-2 {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #FF9A66, transparent 70%);
+      bottom: -150px;
+      right: 10%;
+      animation-duration: 16s;
+    }
+
+    .blob-3 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, #8F3A4B, transparent 70%);
+      top: 40%;
+      left: 60%;
+      opacity: 0.25;
+      animation-duration: 10s;
+    }
+
+    /* Subtle Starfield / Dust Overlay */
+    .star-layer {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 100px 150px, #FFCB99, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 240px 80px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 320px 280px, #FF9A66, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 450px 380px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 600px 120px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 780px 420px, #FFCB99, rgba(0,0,0,0));
+      background-repeat: repeat;
+      background-size: 600px 600px;
+      opacity: 0.4;
+    }
+
+    @keyframes drift {
+      0% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.08) rotate(3deg); }
+      100% { transform: translateY(30px) scale(0.95) rotate(-3deg); }
+    }
+
+    /* Top bar for Skip / Direct Action */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .brand-tag {
+      font-size: 0.85rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--uday-orange);
+      box-shadow: 0 0 10px var(--uday-orange);
+    }
+
+    .skip-btn {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 0.5rem 1.1rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .skip-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--uday-orange);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* Main Center Stage */
+    .stage-container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    /* Logo Centerpiece & Triple Glow Ring */
+    .logo-wrapper {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin-bottom: 2.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (min-width: 640px) {
+      .logo-wrapper {
+        width: 180px;
+        height: 180px;
+        margin-bottom: 3.25rem;
+      }
+    }
+
+    /* Glow Ripple Shockwaves */
+    .glow-ripple {
+      position: absolute;
+      inset: -15px;
+      border-radius: 50%;
+      border: 2px solid var(--uday-orange);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Pulsing Ambient Halo */
+    .logo-halo {
+      position: absolute;
+      inset: -25px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(231, 85, 98, 0.4) 0%, rgba(255, 154, 102, 0.15) 50%, transparent 75%);
+      filter: blur(14px);
+      opacity: 0.3;
+      transition: opacity 0.8s ease;
+    }
+
+    .logo-img-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      padding: 10px;
+      background: radial-gradient(circle at 35% 35%, #1A2432, #0E141D);
+      border: 2px solid rgba(255, 203, 153, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      z-index: 2;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+      transition: filter 0.5s ease;
+    }
+
+    /* ========================================================= */
+    /* KEYFRAME: TRIPLE GLOW ANIMATION                           */
+    /* The logo glows thrice in succession with peak luminescence */
+    /* ========================================================= */
+    .logo-active-glow {
+      animation: glowThrice 3.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+    }
+
+    @keyframes glowThrice {
+      /* Start: Dark / Resting state */
+      0% {
+        box-shadow: 0 0 15px rgba(255, 154, 102, 0.2);
+        border-color: rgba(255, 203, 153, 0.25);
+        transform: scale(0.96);
+      }
+      /* --- GLOW 1 PEAK (at ~16%) --- */
+      16% {
+        box-shadow: 0 0 45px rgba(231, 85, 98, 0.85), 0 0 90px rgba(255, 154, 102, 0.6);
+        border-color: rgba(255, 203, 153, 0.9);
+        transform: scale(1.05);
+      }
+      /* Glow 1 Valley */
+      30% {
+        box-shadow: 0 0 20px rgba(255, 154, 102, 0.3);
+        border-color: rgba(255, 203, 153, 0.35);
+        transform: scale(1);
+      }
+      /* --- GLOW 2 PEAK (at ~48%) --- */
+      48% {
+        box-shadow: 0 0 60px rgba(231, 85, 98, 0.95), 0 0 120px rgba(255, 154, 102, 0.75);
+        border-color: #FFCB99;
+        transform: scale(1.07);
+      }
+      /* Glow 2 Valley */
+      62% {
+        box-shadow: 0 0 25px rgba(255, 154, 102, 0.35);
+        border-color: rgba(255, 203, 153, 0.45);
+        transform: scale(1.01);
+      }
+      /* --- GLOW 3 PEAK (at ~80%) --- Grand Crescendo */
+      80% {
+        box-shadow: 0 0 80px rgba(231, 85, 98, 1), 0 0 150px rgba(255, 154, 102, 0.9), 0 0 200px rgba(255, 203, 153, 0.5);
+        border-color: #FFFFFF;
+        transform: scale(1.10);
+      }
+      /* Settles into majestic continuous warm glow */
+      100% {
+        box-shadow: 0 0 35px rgba(255, 154, 102, 0.5), 0 0 70px rgba(231, 85, 98, 0.3);
+        border-color: rgba(255, 203, 153, 0.6);
+        transform: scale(1);
+      }
+    }
+
+    /* Shockwave Ripples synced to the 3 glows */
+    .ripple-1 {
+      animation: shockwave 1.2s 0.05s ease-out 1;
+    }
+    .ripple-2 {
+      animation: shockwave 1.2s 1.2s ease-out 1;
+    }
+    .ripple-3 {
+      animation: shockwave 1.4s 2.35s ease-out 1;
+    }
+
+    @keyframes shockwave {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.9;
+        border-color: #FFCB99;
+      }
+      100% {
+        transform: scale(2.2);
+        opacity: 0;
+        border-color: var(--uday-red);
+      }
+    }
+
+    /* ========================================================= */
+    /* TYPOGRAPHIC WORD SEQUENCE STAGE                           */
+    /* Words: WAKE UP -> WRITE -> CLICK -> DRAW -> THINK -> UDAY */
+    /* ========================================================= */
+    .text-stage {
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+    }
+
+    .word-display {
+      font-size: 2.75rem;
+      font-weight: 900;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      line-height: 1.1;
+      opacity: 0;
+      transform: translateY(20px) scale(0.94);
+      filter: blur(8px);
+      transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #FAF7F2;
+      position: absolute;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 640px) {
+      .word-display {
+        font-size: 4rem;
+        letter-spacing: 6px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .word-display {
+        font-size: 4.8rem;
+        letter-spacing: 8px;
+      }
+    }
+
+    /* Active word state */
+    .word-display.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0px);
+      pointer-events: auto;
+    }
+
+    /* Exiting word state */
+    .word-display.exiting {
+      opacity: 0;
+      transform: translateY(-24px) scale(1.06);
+      filter: blur(10px);
+    }
+
+    /* Styling for the climactic UDAY...... word */
+    .word-uday {
+      font-family: 'Cinzel', serif;
+      background: linear-gradient(135deg, #FFF0DB 0%, #FF9A66 40%, #E75562 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 35px rgba(255, 154, 102, 0.6));
+      letter-spacing: 8px;
+    }
+
+    @media (min-width: 640px) {
+      .word-uday {
+        font-size: 4.5rem;
+        letter-spacing: 12px;
+      }
+    }
+
+    /* Subtitle & Tagline revealed with UDAY */
+    .uday-sub-block {
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      margin-top: 1.25rem;
+    }
+
+    .uday-sub-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .tagline-pill {
+      display: inline-block;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      background: rgba(255, 154, 102, 0.12);
+      border: 1px solid rgba(255, 154, 102, 0.3);
+      color: var(--uday-gold);
+      font-size: 0.85rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .latin-quote {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* Action & Status Card */
+    .status-container {
+      margin-top: 3.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* Health check progress pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 1.25rem;
+      background: rgba(14, 20, 29, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #F59E0B;
+      box-shadow: 0 0 10px #F59E0B;
+      transition: all 0.3s ease;
+    }
+
+    .status-dot.pulsing {
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+
+    .status-dot.online {
+      background: #10B981;
+      box-shadow: 0 0 12px #10B981;
+      animation: none;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* Sleek Loading Bar */
+    .progress-bar-track {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #FF9A66, #E75562, #FFCB99);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    /* Big Enter Portal Button */
+    .enter-btn {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+      pointer-events: none;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      background: linear-gradient(135deg, #E75562 0%, #FF9A66 100%);
+      color: #FFFFFF;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0.9rem 2.5rem;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(231, 85, 98, 0.45);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .enter-btn.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .enter-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 14px 40px rgba(231, 85, 98, 0.65);
+    }
+
+    .enter-btn svg {
+      transition: transform 0.25s ease;
+    }
+
+    .enter-btn:hover svg {
+      transform: translateX(4px);
+    }
+
+    /* Footer Credits */
+    .portal-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.35);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .portal-footer a {
+      color: rgba(255, 255, 255, 0.5);
+      text-decoration: none;
+      pointer-events: auto;
+      transition: color 0.2s;
+    }
+
+    .portal-footer a:hover {
+      color: var(--uday-orange);
+    }
+
+    @media (max-width: 600px) {
+      .portal-footer {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+        padding-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Blobs -->
+  <div class="ambient-bg">
+    <div class="aurora-blob blob-1"></div>
+    <div class="aurora-blob blob-2"></div>
+    <div class="aurora-blob blob-3"></div>
+    <div class="star-layer"></div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <header class="top-bar">
+    <div class="brand-tag">
+      <span>IISER Bhopal</span>
+    </div>
+    <a href="#" id="directSkipBtn" class="skip-btn" title="Skip animation and enter portal immediately">
+      <span>Skip Intro</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+        <line x1="19" y1="5" x2="19" y2="19"></line>
+      </svg>
+    </a>
+  </header>
+
+  <!-- Central Showcase Stage -->
+  <main class="stage-container">
+    
+    <!-- Logo with Triple Glow Shockwaves -->
+    <div class="logo-wrapper">
+      <div class="logo-halo" id="logoHalo"></div>
+      <div class="glow-ripple ripple-1" id="ripple1"></div>
+      <div class="glow-ripple ripple-2" id="ripple2"></div>
+      <div class="glow-ripple ripple-3" id="ripple3"></div>
+      
+      <div class="logo-img-container logo-active-glow" id="logoImgContainer">
+        <img src="uday-logo.png" alt="UDAY Magazine Logo" class="logo-img" onerror="this.src='uday-logo.jpg'">
+      </div>
+    </div>
+
+    <!-- Poetic Slogan Words Sequence -->
+    <div class="text-stage">
+      <div class="word-display" id="word-0">WAKE UP</div>
+      <div class="word-display" id="word-1">WRITE</div>
+      <div class="word-display" id="word-2">CLICK</div>
+      <div class="word-display" id="word-3">DRAW</div>
+      <div class="word-display" id="word-4">THINK</div>
+      <div class="word-display word-uday" id="word-5">UDAY......</div>
+
+      <div class="uday-sub-block" id="udaySubBlock">
+        <div class="tagline-pill">The Voice of IISER Bhopal</div>
+        <p class="latin-quote">"Magna est veritas et praevalebit"</p>
+      </div>
+    </div>
+
+    <!-- Status & Wakeup Engine Container -->
+    <div class="status-container">
+      
+      <!-- Progress Bar Tracker -->
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+
+      <!-- Live Server Status Indicator -->
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot pulsing" id="statusDot"></span>
+        <span id="statusText">Waking up editorial portal...</span>
+      </div>
+
+      <!-- Action Button (Revealed when ready or upon UDAY completion) -->
+      <a href="#" id="enterPortalBtn" class="enter-btn">
+        <span>Enter Uday Portal</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+
+    </div>
+
+  </main>
+
+  <!-- Portal Footer Attribution -->
+  <footer class="portal-footer">
+    <span>UDAY Magazine &copy; 2024–2026 IISER Bhopal</span>
+    <span>Engineered with &hearts; by <a href="https://github.com/itssouradip34" target="_blank" rel="noopener">Souradip</a> &amp; <a href="https://github.com/sayandeep24-ar" target="_blank" rel="noopener">Sayandeep</a></span>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. CONFIGURATION & TARGET RESOLUTION
+      // =========================================================================
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Target website: Where to redirect when server is ready
+      // Can be customized via ?target=... (e.g. ?target=https://uday-magazine.onrender.com or /)
+      const currentOrigin = window.location.origin;
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      // Default production target if running on a standalone CDN/GitHub Pages, or current root if self-hosted
+      const DEFAULT_RENDER_URL = 'https://uday-magazine.onrender.com';
+      
+      // If hosted on GitHub Pages or file://, target is Render URL; if hosted on Render, target is '/'
+      let targetBase = urlParams.get('target');
+      if (!targetBase) {
+        if (window.location.hostname.includes('github.io') || window.location.protocol === 'file:') {
+          targetBase = DEFAULT_RENDER_URL;
+        } else {
+          targetBase = isLocal ? currentOrigin : '/';
+        }
+      }
+
+      // Health endpoint
+      const healthEndpoint = targetBase === '/' ? '/api/health' : `${targetBase.replace(/\/$/, '')}/api/health`;
+
+      // DOM Elements
+      const directSkipBtn = document.getElementById('directSkipBtn');
+      const enterPortalBtn = document.getElementById('enterPortalBtn');
+      const statusText = document.getElementById('statusText');
+      const statusDot = document.getElementById('statusDot');
+      const progressFill = document.getElementById('progressFill');
+      const udaySubBlock = document.getElementById('udaySubBlock');
+
+      // Setup destination links
+      directSkipBtn.href = targetBase;
+      enterPortalBtn.href = targetBase;
+
+      // =========================================================================
+      // 2. BACKGROUND RENDER WAKEUP ENGINE
+      // =========================================================================
+      let isServerAwake = false;
+      let hasAnimationFinished = false;
+      let checkStartTime = Date.now();
+      let pollInterval = null;
+
+      async function pingRenderService() {
+        if (isServerAwake) return;
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+          const response = await fetch(healthEndpoint, {
+            method: 'GET',
+            cache: 'no-store',
+            mode: 'cors',
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            handleServerAwake();
+          }
+        } catch (err) {
+          // Expected while Render free tier spins up (takes 30-50s)
+          updateSpinupStatus();
+        }
+      }
+
+      function updateSpinupStatus() {
+        if (isServerAwake) return;
+        const elapsedSec = Math.floor((Date.now() - checkStartTime) / 1000);
+        if (elapsedSec > 4) {
+          statusText.textContent = `Awakening Render cloud service... (${elapsedSec}s)`;
+        } else {
+          statusText.textContent = 'Connecting to UDAY Portal...';
+        }
+      }
+
+      function handleServerAwake() {
+        if (isServerAwake) return;
+        isServerAwake = true;
+        if (pollInterval) clearInterval(pollInterval);
+
+        statusDot.classList.remove('pulsing');
+        statusDot.classList.add('online');
+        statusText.textContent = 'Server is online & ready!';
+        progressFill.style.width = '100%';
+
+        // If animation has also reached UDAY, allow or trigger transition
+        if (hasAnimationFinished) {
+          prepareLaunch();
+        }
+      }
+
+      // Start pinging immediately, and poll every 2.5 seconds
+      pingRenderService();
+      pollInterval = setInterval(() => {
+        pingRenderService();
+      }, 2500);
+
+      // =========================================================================
+      // 3. ANIMATION TIMELINE: 3 GLOWS -> POETIC WORDS SEQUENCE
+      // =========================================================================
+      // Words list
+      const WORDS = ['WAKE UP', 'WRITE', 'CLICK', 'DRAW', 'THINK', 'UDAY......'];
+      const totalWords = WORDS.length;
+      let currentWordIndex = -1;
+
+      // Timing breakdown:
+      // - 0.0s to 3.6s: Triple Logo Glow (Logo glows thrice in CSS animation)
+      // - 3.7s onwards: Word sequence reveals
+      const GLOW_PHASE_MS = 3600; 
+      const WORD_HOLD_MS = 1400; // Duration each word stays visible
+
+      // Progress bar driver
+      const TOTAL_ESTIMATED_DURATION = GLOW_PHASE_MS + (totalWords * WORD_HOLD_MS);
+      let animProgress = 0;
+      const progressTimer = setInterval(() => {
+        animProgress += 100;
+        const pct = Math.min(92, Math.floor((animProgress / TOTAL_ESTIMATED_DURATION) * 100));
+        if (!isServerAwake) {
+          progressFill.style.width = `${pct}%`;
+        }
+      }, 100);
+
+      // Start text sequence after the 3 glows finish
+      setTimeout(() => {
+        playNextWord();
+      }, GLOW_PHASE_MS + 200);
+
+      function playNextWord() {
+        // Previous word exit
+        if (currentWordIndex >= 0 && currentWordIndex < totalWords) {
+          const prevEl = document.getElementById(`word-${currentWordIndex}`);
+          if (prevEl) {
+            prevEl.classList.remove('active');
+            prevEl.classList.add('exiting');
+          }
+        }
+
+        currentWordIndex++;
+
+        // If words remain
+        if (currentWordIndex < totalWords) {
+          const nextEl = document.getElementById(`word-${currentWordIndex}`);
+          if (nextEl) {
+            nextEl.classList.add('active');
+          }
+
+          // Check if this is the climactic "UDAY......"
+          if (currentWordIndex === totalWords - 1) {
+            handleFinalWordReached();
+          } else {
+            setTimeout(playNextWord, WORD_HOLD_MS);
+          }
+        }
+      }
+
+      function handleFinalWordReached() {
+        hasAnimationFinished = true;
+        clearInterval(progressTimer);
+
+        // Reveal subtitle and Latin motto
+        setTimeout(() => {
+          udaySubBlock.classList.add('visible');
+        }, 300);
+
+        // Show Enter button immediately
+        enterPortalBtn.classList.add('active');
+
+        if (isServerAwake) {
+          progressFill.style.width = '100%';
+          prepareLaunch();
+        } else {
+          // Keep checking Render in background, auto-launch once awake
+          statusText.textContent = 'Finishing setup... Click below or wait for auto-launch';
+        }
+      }
+
+      function prepareLaunch() {
+        statusText.textContent = 'Welcome! Launching UDAY Portal...';
+        progressFill.style.width = '100%';
+
+        // Smooth auto-redirect after brief presentation pause
+        setTimeout(() => {
+          document.body.style.transition = 'opacity 0.8s ease';
+          document.body.style.opacity = '0';
+          setTimeout(() => {
+            window.location.href = targetBase;
+          }, 700);
+        }, 1600);
+      }
+
+      // Allow immediate click on Enter button
+      enterPortalBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.location.href = targetBase;
+      });
+
+      directSkipBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        window.location.href = targetBase;
+      });
+
+    })();
+  </script>
+</body>
+</html>

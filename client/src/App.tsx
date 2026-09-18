@@ -17,6 +17,7 @@ import { BlogItem } from './components/CommunityBlogsSection';
 import { GalleryItem } from './components/ImageGallerySection';
 import { Article, FEATURED_ARTICLES } from './data/publicationData';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
+import { RenderWakeupLanding } from './components/RenderWakeupLanding';
 
 // Scroll to top automatically on route change
 function ScrollToTop() {
@@ -27,7 +28,9 @@ function ScrollToTop() {
   return null;
 }
 
-export function App() {
+function AppContent() {
+  const location = useLocation();
+  const isLanding = location.pathname === '/landing';
   // Global data states
   const [blogs, setBlogs] = useState<BlogItem[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
@@ -102,138 +105,159 @@ export function App() {
     }
   };
 
+  if (isLanding) {
+    return (
+      <Routes>
+        <Route path="/landing" element={<RenderWakeupLanding targetPath="/" />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#141E28]">
+      
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-scaleUp max-w-md">
+          <div className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 ${
+            toast.isError
+              ? 'bg-red-900 text-white border-red-700'
+              : 'bg-uday-midnight text-white border-uday-orange'
+          }`}>
+            {toast.isError ? (
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            ) : (
+              <CheckCircle2 className="w-5 h-5 text-uday-peach shrink-0 mt-0.5" />
+            )}
+            <div className="text-xs sm:text-sm leading-relaxed">
+              {toast.text}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Navigation Bar */}
+      <Navbar
+        onOpenSubmitBlog={() => setIsSubmitOpen(true)}
+        announcements={announcements}
+      />
+
+      {/* Multi-Page Routes */}
+      <main className="flex-1">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                onOpenSubmitBlog={() => setIsSubmitOpen(true)}
+                blogs={blogs}
+                gallery={gallery}
+                events={events}
+                onReadBlog={(blog) => setSelectedBlog(blog)}
+              />
+            }
+          />
+
+          <Route
+            path="/landing"
+            element={
+              <RenderWakeupLanding targetPath="/" />
+            }
+          />
+
+          <Route
+            path="/magazines"
+            element={
+              <MagazinesPage
+                onReadArticle={(article) => setSelectedArticle(article)}
+              />
+            }
+          />
+
+          <Route
+            path="/blogs"
+            element={
+              <BlogsPage
+                blogs={blogs}
+                onOpenSubmit={() => setIsSubmitOpen(true)}
+                onReadBlog={(blog) => setSelectedBlog(blog)}
+              />
+            }
+          />
+
+          <Route
+            path="/gallery"
+            element={
+              <GalleryPage gallery={gallery} onRefreshGallery={fetchData} />
+            }
+          />
+
+          <Route
+            path="/events"
+            element={
+              <EventsPage events={events} />
+            }
+          />
+
+          <Route
+            path="/feedback"
+            element={
+              <FeedbackPage />
+            }
+          />
+
+          <Route
+            path="/contact"
+            element={
+              <ContactPage />
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <AdminPage />
+            }
+          />
+        </Routes>
+      </main>
+
+      {/* Global Footer */}
+      <Footer
+        onOpenSubmit={() => setIsSubmitOpen(true)}
+      />
+
+      {/* Modals */}
+      <SubmitBlogModal
+        isOpen={isSubmitOpen}
+        onClose={() => setIsSubmitOpen(false)}
+        onSuccess={(msg) => {
+          showToast(msg);
+          fetchData();
+        }}
+      />
+
+      <ArticleReaderModal
+        article={selectedArticle}
+        onClose={() => setSelectedArticle(null)}
+        onNext={handleNextArticle}
+        onPrev={handlePrevArticle}
+      />
+
+      <BlogReaderModal
+        blog={selectedBlog}
+        onClose={() => setSelectedBlog(null)}
+      />
+
+    </div>
+  );
+}
+
+export function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#141E28]">
-        
-        {/* Toast Notification */}
-        {toast && (
-          <div className="fixed bottom-6 right-6 z-50 animate-scaleUp max-w-md">
-            <div className={`p-4 rounded-2xl shadow-2xl border flex items-start gap-3 ${
-              toast.isError
-                ? 'bg-red-900 text-white border-red-700'
-                : 'bg-uday-midnight text-white border-uday-orange'
-            }`}>
-              {toast.isError ? (
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-              ) : (
-                <CheckCircle2 className="w-5 h-5 text-uday-peach shrink-0 mt-0.5" />
-              )}
-              <div className="text-xs sm:text-sm leading-relaxed">
-                {toast.text}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Global Navigation Bar */}
-        <Navbar
-          onOpenSubmitBlog={() => setIsSubmitOpen(true)}
-          announcements={announcements}
-        />
-
-        {/* Multi-Page Routes */}
-        <main className="flex-1">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                <HomePage
-                  onOpenSubmitBlog={() => setIsSubmitOpen(true)}
-                  blogs={blogs}
-                  gallery={gallery}
-                  events={events}
-                  onReadBlog={(blog) => setSelectedBlog(blog)}
-                />
-              }
-            />
-
-            <Route
-              path="/magazines"
-              element={
-                <MagazinesPage
-                  onReadArticle={(article) => setSelectedArticle(article)}
-                />
-              }
-            />
-
-            <Route
-              path="/blogs"
-              element={
-                <BlogsPage
-                  blogs={blogs}
-                  onOpenSubmit={() => setIsSubmitOpen(true)}
-                  onReadBlog={(blog) => setSelectedBlog(blog)}
-                />
-              }
-            />
-
-            <Route
-              path="/gallery"
-              element={
-                <GalleryPage gallery={gallery} onRefreshGallery={fetchData} />
-              }
-            />
-
-            <Route
-              path="/events"
-              element={
-                <EventsPage events={events} />
-              }
-            />
-
-            <Route
-              path="/feedback"
-              element={
-                <FeedbackPage />
-              }
-            />
-
-            <Route
-              path="/contact"
-              element={
-                <ContactPage />
-              }
-            />
-
-            <Route
-              path="/admin"
-              element={
-                <AdminPage />
-              }
-            />
-          </Routes>
-        </main>
-
-        {/* Global Footer */}
-        <Footer
-          onOpenSubmit={() => setIsSubmitOpen(true)}
-        />
-
-        {/* Modals */}
-        <SubmitBlogModal
-          isOpen={isSubmitOpen}
-          onClose={() => setIsSubmitOpen(false)}
-          onSuccess={(msg) => {
-            showToast(msg);
-            fetchData();
-          }}
-        />
-
-        <ArticleReaderModal
-          article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
-          onNext={handleNextArticle}
-          onPrev={handlePrevArticle}
-        />
-
-        <BlogReaderModal
-          blog={selectedBlog}
-          onClose={() => setSelectedBlog(null)}
-        />
-
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }
