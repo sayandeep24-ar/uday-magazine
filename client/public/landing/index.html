@@ -782,8 +782,18 @@
       const udaySubBlock = document.getElementById('udaySubBlock');
 
       // Setup destination links
-      directSkipBtn.href = targetBase;
-      enterPortalBtn.href = targetBase;
+      function getDestinationUrl() {
+        try {
+          const url = new URL(targetBase, window.location.href);
+          url.searchParams.set('entered', '1');
+          return url.toString();
+        } catch (e) {
+          return targetBase.indexOf('?') !== -1 ? `${targetBase}&entered=1` : `${targetBase}?entered=1`;
+        }
+      }
+
+      directSkipBtn.href = getDestinationUrl();
+      enterPortalBtn.href = getDestinationUrl();
 
       // =========================================================================
       // 2. BACKGROUND RENDER WAKEUP ENGINE
@@ -936,7 +946,7 @@
           document.body.style.transition = 'opacity 0.8s ease';
           document.body.style.opacity = '0';
           setTimeout(() => {
-            window.location.href = targetBase;
+            window.location.href = getDestinationUrl();
           }, 700);
         }, 1600);
       }
@@ -948,7 +958,7 @@
           statusText.textContent = 'Server is still waking up... please wait a moment!';
           return;
         }
-        window.location.href = targetBase;
+        window.location.href = getDestinationUrl();
       });
 
       // Skip button click
@@ -958,7 +968,7 @@
           statusText.textContent = 'Server is still waking up... please wait a moment!';
           return;
         }
-        window.location.href = targetBase;
+        window.location.href = getDestinationUrl();
       });
 
     })();

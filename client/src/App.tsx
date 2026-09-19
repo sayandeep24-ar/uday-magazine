@@ -30,7 +30,24 @@ function ScrollToTop() {
 
 function AppContent() {
   const location = useLocation();
-  const [hasEnteredPortal, setHasEnteredPortal] = useState<boolean>(false);
+  const [hasEnteredPortal, setHasEnteredPortal] = useState<boolean>(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.has('entered') || searchParams.has('portal') || sessionStorage.getItem('uday_entered') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.has('entered') || searchParams.has('portal')) {
+      try {
+        sessionStorage.setItem('uday_entered', '1');
+      } catch {}
+      if (!hasEnteredPortal) setHasEnteredPortal(true);
+    }
+  }, [location.search, hasEnteredPortal]);
 
   const isExplicitLanding = location.pathname === '/landing';
   const showLanding = isExplicitLanding || (location.pathname === '/' && !hasEnteredPortal);
@@ -111,7 +128,12 @@ function AppContent() {
   if (showLanding) {
     return (
       <RenderWakeupLanding
-        onEnter={() => setHasEnteredPortal(true)}
+        onEnter={() => {
+          try {
+            sessionStorage.setItem('uday_entered', '1');
+          } catch {}
+          setHasEnteredPortal(true);
+        }}
         targetPath="/"
       />
     );
