@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Feather, Image, Calendar, Download, Eye, Clock, ArrowRight, Sparkles, Heart, Compass } from 'lucide-react';
 import { BlogItem } from '../components/CommunityBlogsSection';
 import { GalleryItem } from '../components/ImageGallerySection';
+import { EventsAndAnnouncementsSection } from '../components/EventsAndAnnouncementsSection';
 
 interface HomePageProps {
   onOpenSubmitBlog: () => void;
@@ -10,6 +11,7 @@ interface HomePageProps {
   gallery: GalleryItem[];
   events: { upcoming: any[]; past: any[] };
   onReadBlog: (blog: BlogItem) => void;
+  magazines?: any[];
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -17,8 +19,32 @@ export const HomePage: React.FC<HomePageProps> = ({
   blogs,
   gallery,
   events,
-  onReadBlog
+  onReadBlog,
+  magazines = []
 }) => {
+  const defaultLatest = {
+    id: "mag-vol-11",
+    volumeNumber: 11,
+    year: 2024,
+    title: "The Ascent",
+    theme: "The Changing Seasons & Classical Indian Ragas (Hindol, Deepak, Megha, Shri)",
+    coverImage: "/uday-logo.jpg",
+    pdfUrl: "/uploads/uday-volume-11-the-ascent.pdf",
+    editorInChief: "Aayush Anand",
+    pagesCount: 84,
+    releaseDate: "April 2024",
+    description: "The latest print and digital edition of Uday, built upon the concept of changing campus seasons and Indian Classical Ragas (Hindol, Deepak, Megha, Shri). Featuring investigative journalism, scientific philosophy, and fine student art.",
+    isLatest: true
+  };
+
+  const latestMagazine = (magazines && magazines.length > 0)
+    ? (magazines.find(m => m.isLatest) || magazines[0])
+    : defaultLatest;
+
+  const previousMagazines = (magazines && magazines.length > 0)
+    ? magazines.filter(m => m.id !== latestMagazine.id)
+    : [];
+
   return (
     <div className="space-y-20 pt-28 pb-20">
       
@@ -35,7 +61,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="w-2 h-2 rounded-full bg-uday-crimson animate-ping" />
                 <span>Official Magazine of IISER Bhopal</span>
                 <span className="text-uday-crimson font-bold">•</span>
-                <span className="text-uday-teal font-bold">Vol 11: The Ascent</span>
+                <span className="text-uday-teal font-bold">Vol {latestMagazine.volumeNumber}: {latestMagazine.title}</span>
               </div>
 
               <div className="space-y-2">
@@ -74,15 +100,15 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               <div className="pt-6 grid grid-cols-3 gap-4 border-t border-uday-peach/40 max-w-md mx-auto lg:mx-0 text-center lg:text-left">
                 <div>
-                  <div className="text-2xl font-black font-serif text-uday-crimson">Vol. 11</div>
-                  <div className="text-xs text-uday-midnight/70 font-medium">Current Edition</div>
+                  <div className="text-2xl font-black font-serif text-uday-crimson">Vol. {latestMagazine.volumeNumber}</div>
+                  <div className="text-xs text-uday-midnight/70 font-medium">Latest Edition</div>
                 </div>
                 <div className="border-x border-uday-peach/40 px-2">
                   <div className="text-2xl font-black font-serif text-uday-teal">30 Days</div>
                   <div className="text-xs text-uday-midnight/70 font-medium">Open Blog Window</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-black font-serif text-uday-sage">84 Pages</div>
+                  <div className="text-2xl font-black font-serif text-uday-sage">{latestMagazine.pagesCount || 84} Pages</div>
                   <div className="text-xs text-uday-midnight/70 font-medium">Full Color PDF</div>
                 </div>
               </div>
@@ -116,14 +142,14 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="w-60 sm:w-64 shrink-0">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white group bg-uday-midnight">
                 <img
-                  src="/uday-logo.jpg"
-                  alt="Uday Vol 11 Cover"
+                  src={latestMagazine.coverImage || '/uday-logo.jpg'}
+                  alt={`Uday Vol ${latestMagazine.volumeNumber} Cover`}
                   className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end text-white">
                   <span className="text-[10px] uppercase font-bold text-uday-peach">IISER Bhopal</span>
-                  <h3 className="font-serif font-black text-xl">UDAY • Vol 11</h3>
-                  <p className="text-xs text-white/80">The Ascent (2024)</p>
+                  <h3 className="font-serif font-black text-xl">UDAY • Vol {latestMagazine.volumeNumber}</h3>
+                  <p className="text-xs text-white/80">{latestMagazine.title} ({latestMagazine.year})</p>
                 </div>
               </div>
             </div>
@@ -135,26 +161,30 @@ export const HomePage: React.FC<HomePageProps> = ({
                   Latest Official Release
                 </span>
                 <span className="bg-uday-sage/20 text-uday-forest text-xs font-semibold px-3 py-0.5 rounded-full">
-                  84 Pages • Digital PDF
+                  {latestMagazine.pagesCount || 84} Pages • Digital PDF
                 </span>
               </div>
 
               <h2 className="font-serif text-3xl font-black text-uday-midnight">
-                Volume 11 (2024): <span className="text-uday-crimson">The Ascent</span>
+                Volume {latestMagazine.volumeNumber} ({latestMagazine.year}): <span className="text-uday-crimson">{latestMagazine.title}</span>
               </h2>
 
               <p className="text-xs sm:text-sm text-uday-midnight/75 leading-relaxed max-w-2xl">
-                The latest print and digital edition of Uday, built upon the concept of changing campus seasons and Indian Classical Ragas (Hindol, Deepak, Megha, Shri). Featuring investigative journalism, scientific philosophy, and fine student art.
+                {latestMagazine.description || latestMagazine.theme || "The official annual magazine edition of Uday, compiling student and faculty literary perspectives, investigative essays, and creative art across IISER Bhopal."}
               </p>
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
-                <a
-                  href="/uploads/uday-volume-11-the-ascent.pdf"
-                  download="Uday-Volume-11-The-Ascent.pdf"
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-uday-crimson to-uday-orange text-white font-semibold text-xs uppercase tracking-wider shadow-warm hover:opacity-95 transition-all flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" /> Download Official PDF
-                </a>
+                {latestMagazine.pdfUrl && (
+                  <a
+                    href={latestMagazine.pdfUrl}
+                    download={latestMagazine.pdfUrl.startsWith('http') ? undefined : `Uday-Volume-${latestMagazine.volumeNumber}-${latestMagazine.title.replace(/\s+/g, '-')}.pdf`}
+                    target={latestMagazine.pdfUrl.startsWith('http') ? '_blank' : undefined}
+                    rel="noreferrer"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-uday-crimson to-uday-orange text-white font-semibold text-xs uppercase tracking-wider shadow-warm hover:opacity-95 transition-all flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> Download Official PDF
+                  </a>
+                )}
 
                 <Link
                   to="/magazines"
@@ -166,6 +196,43 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
           </div>
+
+          {/* Previous Editions Showcase */}
+          {previousMagazines.length > 0 && (
+            <div className="pt-8 mt-8 border-t border-uday-peach/40">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-serif font-bold text-lg text-uday-midnight flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-uday-crimson" />
+                  <span>Previous Editions & Archives ({previousMagazines.length})</span>
+                </h4>
+                <Link to="/magazines" className="text-xs font-bold text-uday-teal hover:underline flex items-center gap-1">
+                  <span>View All Volumes</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {previousMagazines.map(prevMag => (
+                  <div key={prevMag.id} className="bg-white/80 p-4 rounded-2xl border border-uday-peach/40 flex items-center gap-3 hover:shadow-md transition-all">
+                    <div className="w-14 h-18 rounded-lg overflow-hidden shrink-0 bg-uday-midnight">
+                      <img src={prevMag.coverImage || '/uday-logo.jpg'} alt={prevMag.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[10px] font-bold text-uday-crimson uppercase">Vol {prevMag.volumeNumber} • {prevMag.year}</span>
+                      <h5 className="font-serif font-bold text-sm text-uday-midnight truncate">{prevMag.title}</h5>
+                      <p className="text-[11px] text-uday-midnight/60 truncate">{prevMag.theme || `${prevMag.pagesCount || 80} Pages`}</p>
+                      <div className="pt-1 flex items-center gap-2">
+                        {prevMag.pdfUrl && (
+                          <a href={prevMag.pdfUrl} target="_blank" rel="noreferrer" className="text-[11px] font-bold text-uday-teal hover:underline flex items-center gap-1">
+                            <Download className="w-3 h-3" /> PDF
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -270,6 +337,9 @@ export const HomePage: React.FC<HomePageProps> = ({
           ))}
         </div>
       </section>
+
+      {/* 5. EVENTS & PAST ARCHIVES HIGHLIGHT */}
+      <EventsAndAnnouncementsSection events={events} />
 
     </div>
   );

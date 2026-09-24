@@ -812,11 +812,65 @@ app.delete('/api/magazines/:id', requireAdmin, (req, res) => {
   const { id } = req.params;
   const data = readData();
   data.magazines = (data.magazines || []).filter(m => m.id !== id);
-  if (data.magazines.length > 0) {
+  if (data.magazines.length > 0 && !data.magazines.some(m => m.isLatest)) {
     data.magazines[0].isLatest = true;
   }
   writeData(data);
   res.json({ success: true });
+});
+
+// Set a magazine as the Featured / Latest edition on the front page
+app.post('/api/admin/magazines/:id/feature', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.magazines) data.magazines = [];
+  const target = data.magazines.find(m => m.id === id);
+  if (!target) {
+    return res.status(404).json({ error: 'Magazine issue not found' });
+  }
+  data.magazines.forEach(m => { m.isLatest = false; });
+  target.isLatest = true;
+  writeData(data);
+  res.json({ success: true, message: `"${target.title}" is now featured on the front page as the latest edition!`, magazine: target });
+});
+
+// Update magazine issue metadata
+app.put('/api/admin/magazines/:id', requireAdmin, upload.fields([
+  { name: 'pdf', maxCount: 1 },
+  { name: 'cover', maxCount: 1 }
+]), (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.magazines) data.magazines = [];
+  const mag = data.magazines.find(m => m.id === id);
+  if (!mag) {
+    return res.status(404).json({ error: 'Magazine not found' });
+  }
+  const { volumeNumber, year, title, theme, editorInChief, pagesCount, releaseDate, description, pdfUrl, coverImageUrl, isLatest } = req.body;
+  if (volumeNumber) mag.volumeNumber = Number(volumeNumber);
+  if (year) mag.year = Number(year);
+  if (title) mag.title = title.trim();
+  if (theme) mag.theme = theme.trim();
+  if (editorInChief) mag.editorInChief = editorInChief.trim();
+  if (pagesCount) mag.pagesCount = Number(pagesCount);
+  if (releaseDate) mag.releaseDate = releaseDate.trim();
+  if (description !== undefined) mag.description = description.trim();
+  if (pdfUrl) mag.pdfUrl = pdfUrl.trim();
+  if (coverImageUrl) mag.coverImage = coverImageUrl.trim();
+  if (req.files) {
+    if (req.files.pdf && req.files.pdf[0]) {
+      mag.pdfUrl = `/uploads/${req.files.pdf[0].filename}`;
+    }
+    if (req.files.cover && req.files.cover[0]) {
+      mag.coverImage = `/uploads/${req.files.cover[0].filename}`;
+    }
+  }
+  if (isLatest === true || isLatest === 'true') {
+    data.magazines.forEach(m => { m.isLatest = false; });
+    mag.isLatest = true;
+  }
+  writeData(data);
+  res.json({ success: true, magazine: mag });
 });
 
 // ==========================================
@@ -998,7 +1052,290 @@ app.post('/api/admin/team', requireAdmin, (req, res) => {
 });
 
 // ==========================================
-// 8. SERVE CLIENT IN PRODUCTION / RENDER DEPLOYMENT
+// 8. ADMIN MANAGEMENT: ANNOUNCEMENTS & EVENTS
+// ==========================================
+
+// --- Announcements Admin Endpoints ---
+
+// Get all announcements (active and inactive) for admin
+app.get('/api/admin/announcements', requireAdmin, (req, res) => {
+  const data = readData();
+  res.json({ announcements: data.announcements || [] });
+});
+
+// Add a new announcement
+app.post('/api/admin/announcements', requireAdmin, (req, res) => {
+  const { text, tag, active, link } = req.body;
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'Announcement text is required' });
+  }
+  const data = readData();
+  if (!data.announcements) data.announcements = [];
+  const newAnnouncement = {
+    id: `ann-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
+    text: text.trim(),
+    tag: (tag || 'UPDATE').trim().toUpperCase(),
+    active: active !== undefined ? Boolean(active) : true,
+    link: link ? link.trim() : undefined,
+    createdAt: new Date().toISOString()
+  };
+  data.announcements.unshift(newAnnouncement);
+  writeData(data);
+  res.status(201).json({ success: true, announcement: newAnnouncement });
+});
+
+// Edit an announcement
+app.put('/api/admin/announcements/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { text, tag, active, link } = req.body;
+  const data = readData();
+  if (!data.announcements) data.announcements = [];
+  const ann = data.announcements.find(a => a.id === id);
+  if (!ann) {
+    return res.status(404).json({ error: 'Announcement not found' });
+  }
+  if (text !== undefined) ann.text = text.trim();
+  if (tag !== undefined) ann.tag = tag.trim().toUpperCase();
+  if (active !== undefined) ann.active = Boolean(active);
+  if (link !== undefined) ann.link = link.trim();
+  ann.updatedAt = new Date().toISOString();
+  writeData(data);
+  res.json({ success: true, announcement: ann });
+});
+
+// Delete an announcement
+app.delete('/api/admin/announcements/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.announcements) data.announcements = [];
+  const initialLength = data.announcements.length;
+  data.announcements = data.announcements.filter(a => a.id !== id);
+  if (data.announcements.length === initialLength) {
+    return res.status(404).json({ error: 'Announcement not found' });
+  }
+  writeData(data);
+  res.json({ success: true, message: 'Announcement deleted successfully' });
+});
+
+// Toggle announcement active status
+app.post('/api/admin/announcements/:id/toggle', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.announcements) data.announcements = [];
+  const ann = data.announcements.find(a => a.id === id);
+  if (!ann) {
+    return res.status(404).json({ error: 'Announcement not found' });
+  }
+  ann.active = !ann.active;
+  writeData(data);
+  res.json({ success: true, active: ann.active, announcement: ann });
+});
+
+// --- Events Admin Endpoints ---
+
+// Create a new Event (Upcoming or Past)
+app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) => {
+  const {
+    title, category, date, time, venue, description, badge, cta,
+    status, attendees, imageUrl
+  } = req.body;
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Event title is required' });
+  }
+  const data = readData();
+  if (!data.events) data.events = { upcoming: [], past: [] };
+  if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
+  if (!Array.isArray(data.events.past)) data.events.past = [];
+
+  let finalImage = imageUrl ? imageUrl.trim() : '';
+  if (req.file) {
+    finalImage = `/uploads/${req.file.filename}`;
+  }
+  if (!finalImage) {
+    finalImage = 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
+  }
+
+  const isPast = status === 'past';
+  const eventId = isPast 
+    ? `pev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
+    : `ev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
+
+  const eventObj = {
+    id: eventId,
+    title: title.trim(),
+    category: (category || 'Campus Event').trim(),
+    date: (date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })).trim(),
+    time: time ? time.trim() : '',
+    venue: (venue || 'IISER Bhopal Campus').trim(),
+    description: (description || '').trim(),
+    badge: badge ? badge.trim() : undefined,
+    cta: cta ? cta.trim() : 'RSVP Free',
+    image: finalImage,
+    attendees: attendees ? attendees.trim() : 'Campus Community',
+    createdAt: new Date().toISOString()
+  };
+
+  if (isPast) {
+    data.events.past.unshift(eventObj);
+  } else {
+    data.events.upcoming.unshift(eventObj);
+  }
+
+  writeData(data);
+  res.status(201).json({ success: true, event: eventObj, status: isPast ? 'past' : 'upcoming' });
+});
+
+// Edit an existing Event
+app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res) => {
+  const { id } = req.params;
+  const {
+    title, category, date, time, venue, description, badge, cta,
+    status, attendees, imageUrl
+  } = req.body;
+  const data = readData();
+  if (!data.events) data.events = { upcoming: [], past: [] };
+  if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
+  if (!Array.isArray(data.events.past)) data.events.past = [];
+
+  let currentStatus = null;
+  let eventIndex = data.events.upcoming.findIndex(e => e.id === id);
+  if (eventIndex !== -1) {
+    currentStatus = 'upcoming';
+  } else {
+    eventIndex = data.events.past.findIndex(e => e.id === id);
+    if (eventIndex !== -1) {
+      currentStatus = 'past';
+    }
+  }
+
+  if (!currentStatus) {
+    return res.status(404).json({ error: 'Event not found' });
+  }
+
+  const existingEvent = currentStatus === 'upcoming' 
+    ? data.events.upcoming[eventIndex] 
+    : data.events.past[eventIndex];
+
+  if (title !== undefined) existingEvent.title = title.trim();
+  if (category !== undefined) existingEvent.category = category.trim();
+  if (date !== undefined) existingEvent.date = date.trim();
+  if (time !== undefined) existingEvent.time = time.trim();
+  if (venue !== undefined) existingEvent.venue = venue.trim();
+  if (description !== undefined) existingEvent.description = description.trim();
+  if (badge !== undefined) existingEvent.badge = badge.trim();
+  if (cta !== undefined) existingEvent.cta = cta.trim();
+  if (attendees !== undefined) existingEvent.attendees = attendees.trim();
+  if (imageUrl) existingEvent.image = imageUrl.trim();
+  if (req.file) {
+    existingEvent.image = `/uploads/${req.file.filename}`;
+  }
+  existingEvent.updatedAt = new Date().toISOString();
+
+  // If status is toggled between upcoming and past
+  const targetStatus = status || currentStatus;
+  if (targetStatus !== currentStatus) {
+    if (currentStatus === 'upcoming' && targetStatus === 'past') {
+      data.events.upcoming.splice(eventIndex, 1);
+      if (!existingEvent.image) {
+        existingEvent.image = 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
+      }
+      if (!existingEvent.attendees) {
+        existingEvent.attendees = 'Campus Community';
+      }
+      data.events.past.unshift(existingEvent);
+    } else if (currentStatus === 'past' && targetStatus === 'upcoming') {
+      data.events.past.splice(eventIndex, 1);
+      data.events.upcoming.unshift(existingEvent);
+    }
+  }
+
+  writeData(data);
+  res.json({ success: true, event: existingEvent, status: targetStatus });
+});
+
+// Mark an upcoming event as past to feature it in the past events section
+app.post('/api/admin/events/:id/mark-past', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { image, attendees, description } = req.body;
+  const data = readData();
+  if (!data.events) data.events = { upcoming: [], past: [] };
+  if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
+  if (!Array.isArray(data.events.past)) data.events.past = [];
+
+  const index = data.events.upcoming.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Upcoming event not found' });
+  }
+
+  const event = data.events.upcoming.splice(index, 1)[0];
+  event.image = image || event.image || 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
+  event.attendees = attendees || event.attendees || '300+ Students & Faculty';
+  if (description) event.description = description.trim();
+  event.markedPastAt = new Date().toISOString();
+
+  data.events.past.unshift(event);
+  writeData(data);
+  res.json({
+    success: true,
+    message: `Event "${event.title}" marked as past and now featured in Past Events Archive!`,
+    event
+  });
+});
+
+// Move a past event back to upcoming
+app.post('/api/admin/events/:id/mark-upcoming', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.events) data.events = { upcoming: [], past: [] };
+  if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
+  if (!Array.isArray(data.events.past)) data.events.past = [];
+
+  const index = data.events.past.findIndex(e => e.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: 'Past event not found' });
+  }
+
+  const event = data.events.past.splice(index, 1)[0];
+  data.events.upcoming.unshift(event);
+  writeData(data);
+  res.json({
+    success: true,
+    message: `Event "${event.title}" moved to Upcoming Events!`,
+    event
+  });
+});
+
+// Delete an event (from upcoming or past)
+app.delete('/api/admin/events/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.events) data.events = { upcoming: [], past: [] };
+  if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
+  if (!Array.isArray(data.events.past)) data.events.past = [];
+
+  let deleted = false;
+  const upIndex = data.events.upcoming.findIndex(e => e.id === id);
+  if (upIndex !== -1) {
+    data.events.upcoming.splice(upIndex, 1);
+    deleted = true;
+  } else {
+    const pastIndex = data.events.past.findIndex(e => e.id === id);
+    if (pastIndex !== -1) {
+      data.events.past.splice(pastIndex, 1);
+      deleted = true;
+    }
+  }
+
+  if (!deleted) {
+    return res.status(404).json({ error: 'Event not found' });
+  }
+
+  writeData(data);
+  res.json({ success: true, message: 'Event successfully deleted' });
+});
+
+// ==========================================
+// 9. SERVE CLIENT IN PRODUCTION / RENDER DEPLOYMENT
 // ==========================================
 
 const CLIENT_DIST = path.join(__dirname, '../client/dist');

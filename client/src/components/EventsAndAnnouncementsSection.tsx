@@ -163,49 +163,62 @@ export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ ev
 
         {/* Tab 2: Past Events Archive */}
         {activeTab === 'past' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fadeIn">
-            {(events.past || []).map(pevent => (
-              <div
-                key={pevent.id}
-                className="bg-[#FAF7F2] rounded-3xl border border-uday-peach/50 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="h-48 overflow-hidden relative">
-                    <img
-                      src={pevent.image}
-                      alt={pevent.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-uday-peach" />
-                      <span>{pevent.attendees}</span>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-3">
-                    <div className="flex items-center gap-2 text-xs text-uday-teal font-semibold">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{pevent.date}</span>
-                      <span>•</span>
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>{pevent.venue}</span>
-                    </div>
-
-                    <h3 className="font-serif text-xl font-bold text-uday-midnight leading-snug">
-                      {pevent.title}
-                    </h3>
-
-                    <p className="text-xs sm:text-sm text-uday-midnight/70 leading-relaxed">
-                      {pevent.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-white border-t border-uday-peach/30 text-xs font-semibold text-uday-teal text-center">
-                  Archive Recorded in Uday Chronicles
-                </div>
+          <div className="space-y-6 animate-fadeIn">
+            {(!events.past || events.past.length === 0) ? (
+              <div className="p-12 text-center bg-[#FAF7F2] rounded-3xl border border-uday-peach/40 space-y-3">
+                <Calendar className="w-10 h-10 text-uday-teal/50 mx-auto" />
+                <h4 className="font-serif font-bold text-lg text-uday-midnight">No Past Events Archived Yet</h4>
+                <p className="text-xs text-uday-midnight/60 max-w-md mx-auto">
+                  Completed events will appear here once marked as past by the editorial board.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {events.past.map(pevent => (
+                  <div
+                    key={pevent.id}
+                    className="bg-[#FAF7F2] rounded-3xl border border-uday-peach/50 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="h-48 overflow-hidden relative bg-uday-midnight">
+                        <img
+                          src={pevent.image || 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80'}
+                          alt={pevent.title}
+                          onError={(e: any) => { e.currentTarget.src = '/uday-logo.jpg'; }}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-uday-peach" />
+                          <span>{pevent.attendees || 'Campus Community'}</span>
+                        </div>
+                      </div>
+
+                      <div className="p-6 space-y-3">
+                        <div className="flex items-center gap-2 text-xs text-uday-teal font-semibold">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{pevent.date}</span>
+                          <span>•</span>
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{pevent.venue}</span>
+                        </div>
+
+                        <h3 className="font-serif text-xl font-bold text-uday-midnight leading-snug">
+                          {pevent.title}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-uday-midnight/70 leading-relaxed">
+                          {pevent.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-white border-t border-uday-peach/30 text-xs font-semibold text-uday-teal text-center">
+                      Archive Recorded in Uday Chronicles
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

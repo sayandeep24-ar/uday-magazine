@@ -56,6 +56,7 @@ function AppContent() {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [events, setEvents] = useState<{ upcoming: any[]; past: any[] }>({ upcoming: [], past: [] });
+  const [magazines, setMagazines] = useState<any[]>([]);
 
   // Modals state
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
@@ -98,6 +99,13 @@ function AppContent() {
       if (resEv.ok) {
         const data = await resEv.json();
         setEvents(data.events || { upcoming: [], past: [] });
+      }
+
+      // Magazines
+      const resMag = await fetch('/api/magazines');
+      if (resMag.ok) {
+        const data = await resMag.json();
+        setMagazines(data.magazines || []);
       }
     } catch (err) {
       console.error('Error loading data:', err);
@@ -179,6 +187,7 @@ function AppContent() {
                 blogs={blogs}
                 gallery={gallery}
                 events={events}
+                magazines={magazines}
                 onReadBlog={(blog) => setSelectedBlog(blog)}
               />
             }
@@ -242,7 +251,7 @@ function AppContent() {
           <Route
             path="/admin"
             element={
-              <AdminPage />
+              <AdminPage onRefreshGlobalData={fetchData} />
             }
           />
         </Routes>
