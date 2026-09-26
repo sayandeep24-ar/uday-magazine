@@ -50,7 +50,7 @@ function AppContent() {
   }, [location.search, hasEnteredPortal]);
 
   const isExplicitLanding = location.pathname === '/landing';
-  const showLanding = isExplicitLanding || (location.pathname === '/' && !hasEnteredPortal);
+  const showLanding = isExplicitLanding;
   // Global data states
   const [blogs, setBlogs] = useState<BlogItem[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);

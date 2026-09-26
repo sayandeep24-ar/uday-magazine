@@ -1034,6 +1034,20 @@ app.get('/api/admin/feedback', requireAdmin, (req, res) => {
   res.json({ feedback: data.feedback || [] });
 });
 
+// Admin Delete Single Feedback Entry
+app.delete('/api/admin/feedback/:id', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const data = readData();
+  if (!data.feedback) data.feedback = [];
+  const initialLength = data.feedback.length;
+  data.feedback = data.feedback.filter(item => item.id !== id);
+  if (data.feedback.length === initialLength) {
+    return res.status(404).json({ error: 'Feedback entry not found' });
+  }
+  writeData(data);
+  res.json({ success: true, message: 'Feedback entry deleted successfully', feedback: data.feedback });
+});
+
 // Export Feedback to CSV
 app.get('/api/admin/feedback/export-csv', requireAdmin, (req, res) => {
   const data = readData();

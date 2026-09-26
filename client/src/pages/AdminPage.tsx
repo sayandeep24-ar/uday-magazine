@@ -4,7 +4,8 @@ import {
   Key, LogOut, Check, Clock, Trash2, ExternalLink, Mail, FolderUp,
   PlusCircle, Download, RefreshCw, AlertCircle, CheckCircle2, Upload, FileText,
   Users, UserCheck, Edit3, Plus, Save, Phone, MapPin, Eye, EyeOff,
-  Calendar, Bell, Sparkles, Bookmark
+  Calendar, Bell, Sparkles, Bookmark, Search, Star, Copy, ChevronDown, ChevronUp,
+  SlidersHorizontal, Filter, MessageCircle
 } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 import { EDITORIAL_BOARD, TeamAndContact, LeadTeamMember } from '../data/publicationData';
@@ -97,10 +98,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [uploadingAnnouncement, setUploadingAnnouncement] = useState(false);
   const [announcementSuccessMsg, setAnnouncementSuccessMsg] = useState('');
 
-  // Feedback state
+  // Feedback state & UI controls
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
   const [sheetsWebhookUrl, setSheetsWebhookUrl] = useState('');
   const [savingWebhook, setSavingWebhook] = useState(false);
+  const [feedbackSearch, setFeedbackSearch] = useState('');
+  const [feedbackCategoryFilter, setFeedbackCategoryFilter] = useState('ALL');
+  const [feedbackRatingFilter, setFeedbackRatingFilter] = useState('ALL');
+  const [feedbackSortOrder, setFeedbackSortOrder] = useState<'newest' | 'oldest' | 'rating_high' | 'rating_low'>('newest');
+  const [showWebhookConfig, setShowWebhookConfig] = useState(false);
+  const [copiedFeedbackId, setCopiedFeedbackId] = useState<string | null>(null);
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState<string | null>(null);
 
   // Email Logs
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
@@ -765,6 +773,37 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
     } finally {
       setSavingWebhook(false);
     }
+  };
+
+  // Delete Feedback Entry
+  const handleDeleteFeedback = async (id: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this reader response?')) return;
+    setDeletingFeedbackId(id);
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setFeedbackList(prev => prev.filter(item => item.id !== id));
+      } else {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Failed to delete feedback entry');
+      }
+    } catch (err) {
+      alert('Network error while deleting feedback');
+    } finally {
+      setDeletingFeedbackId(null);
+    }
+  };
+
+  const handleCopyFeedback = (item: any) => {
+    const text = `Reader Feedback:\nName: ${item.name}\nEmail: ${item.email}${item.rollOrDept ? `\nRoll/Dept: ${item.rollOrDept}` : ''}\nCategory: ${item.category}\nRating: ${item.rating}/5 stars\nDate: ${new Date(item.timestamp).toLocaleString()}\n\n"${item.message}"`;
+    navigator.clipboard.writeText(text);
+    setCopiedFeedbackId(item.id);
+    setTimeout(() => setCopiedFeedbackId(null), 2000);
   };
 
   // Password Change Step 1: Dispatches OTP strictly to sayandeep.biswas04@gmail.com
@@ -2525,79 +2564,477 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
               )}
 
               {/* TAB 4: FEEDBACK & GOOGLE SHEETS */}
-              {activeTab === 'feedback' && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-uday-peach/30 pb-3">
-                    <div>
-                      <h3 className="font-serif text-2xl font-bold text-uday-midnight">Google Sheets Feedback Feed</h3>
-                      <p className="text-xs text-uday-midnight/70">
-                        All student feedback submissions and collected email addresses.
-                      </p>
+              {activeTab === 'feedback' && (() => {
+                const feedbackCategories = Array.from(new Set([
+                  'Magazine Content',
+                  'Layout & Design',
+                  'Website Experience',
+                  'Submissions Inquiry',
+                  'General Suggestion',
+                  ...feedbackList.map(f => f.category).filter(Boolean)
+                ]));
+
+                const filteredFeedback = feedbackList
+                  .filter(item => {
+                    const q = feedbackSearch.toLowerCase().trim();
+                    const matchesSearch = !q || (
+                      (item.name || '').toLowerCase().includes(q) ||
+                      (item.email || '').toLowerCase().includes(q) ||
+                      (item.rollOrDept || '').toLowerCase().includes(q) ||
+                      (item.category || '').toLowerCase().includes(q) ||
+                      (item.message || '').toLowerCase().includes(q)
+                    );
+
+                    const matchesCat = feedbackCategoryFilter === 'ALL' || item.category === feedbackCategoryFilter;
+                    const matchesRating = feedbackRatingFilter === 'ALL' || String(item.rating) === feedbackRatingFilter;
+
+                    return matchesSearch && matchesCat && matchesRating;
+                  })
+                  .sort((a, b) => {
+                    if (feedbackSortOrder === 'oldest') {
+                      return (a.timestamp || 0) - (b.timestamp || 0);
+                    }
+                    if (feedbackSortOrder === 'rating_high') {
+                      return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+                    }
+                    if (feedbackSortOrder === 'rating_low') {
+                      return (Number(a.rating) || 0) - (Number(b.rating) || 0);
+                    }
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                  });
+
+                const totalFeedbackCount = feedbackList.length;
+                const avgFeedbackRating = totalFeedbackCount > 0
+                  ? (feedbackList.reduce((acc, curr) => acc + (Number(curr.rating) || 5), 0) / totalFeedbackCount).toFixed(1)
+                  : '5.0';
+                const fiveStarFeedbackCount = feedbackList.filter(f => Number(f.rating) === 5).length;
+                const fourStarFeedbackCount = feedbackList.filter(f => Number(f.rating) === 4).length;
+                const positiveSentimentPct = totalFeedbackCount > 0
+                  ? Math.round(((fiveStarFeedbackCount + fourStarFeedbackCount) / totalFeedbackCount) * 100)
+                  : 100;
+                const uniqueFeedbackEmails = new Set(feedbackList.map(f => (f.email || '').toLowerCase().trim()).filter(Boolean)).size;
+                const hasActiveFilters = feedbackSearch.trim() !== '' || feedbackCategoryFilter !== 'ALL' || feedbackRatingFilter !== 'ALL';
+
+                return (
+                  <div className="space-y-6 animate-fadeIn">
+                    {/* Top Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-uday-peach/30 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-serif text-2xl font-bold text-uday-midnight">Reader Feedback & Reviews</h3>
+                          <span className="bg-uday-crimson/10 text-uday-crimson text-xs font-bold px-2.5 py-0.5 rounded-full">
+                            {totalFeedbackCount} responses
+                          </span>
+                        </div>
+                        <p className="text-xs text-uday-midnight/70 mt-1">
+                          Browse, filter, and respond to feedback and suggestions submitted by readers.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowWebhookConfig(!showWebhookConfig)}
+                          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                            showWebhookConfig
+                              ? 'bg-uday-midnight text-white border-uday-midnight'
+                              : 'bg-white hover:bg-stone-50 text-uday-midnight border-uday-peach/60'
+                          }`}
+                        >
+                          <SlidersHorizontal className="w-3.5 h-3.5 text-uday-crimson" />
+                          <span>Google Sheets Sync</span>
+                          {sheetsWebhookUrl && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" title="Webhook configured" />
+                          )}
+                          {showWebhookConfig ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <a
+                          href="/api/admin/feedback/export-csv"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        >
+                          <Download className="w-3.5 h-3.5" /> Export CSV
+                        </a>
+                      </div>
                     </div>
 
-                    <a
-                      href="/api/admin/feedback/export-csv"
-                      target="_blank"
-                      className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-                    >
-                      <Download className="w-4 h-4" /> Download CSV / Excel
-                    </a>
-                  </div>
+                    {/* Collapsible Google Sheets Webhook Configuration */}
+                    {showWebhookConfig && (
+                      <div className="bg-white rounded-2xl border border-uday-peach/60 p-5 shadow-sm space-y-4 animate-scaleUp">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-sm font-bold text-uday-midnight flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                              Google Apps Script Web App Integration
+                            </h4>
+                            <p className="text-xs text-uday-midnight/70 mt-0.5">
+                              Incoming feedback forms automatically forward directly to your Google Sheet in real-time.
+                            </p>
+                          </div>
+                        </div>
 
-                  <form onSubmit={handleSaveWebhook} className="bg-[#FAF7F2] p-4 rounded-2xl border border-uday-peach/40 space-y-3">
-                    <label className="block text-xs font-bold text-uday-midnight uppercase tracking-wider">
-                      Google Apps Script Web App Endpoint URL
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="url"
-                        placeholder="https://script.google.com/macros/s/.../exec"
-                        value={sheetsWebhookUrl}
-                        onChange={e => setSheetsWebhookUrl(e.target.value)}
-                        className="flex-1 bg-white border border-uday-peach/60 rounded-xl px-3.5 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                      />
-                      <button
-                        type="submit"
-                        disabled={savingWebhook}
-                        className="px-5 py-2 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
-                      >
-                        {savingWebhook ? 'Saving...' : 'Save Webhook'}
-                      </button>
+                        <form onSubmit={handleSaveWebhook} className="space-y-3">
+                          <label className="block text-[11px] font-bold text-uday-midnight uppercase tracking-wider">
+                            Webhook Deployment URL (Exec)
+                          </label>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <input
+                              type="url"
+                              placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                              value={sheetsWebhookUrl}
+                              onChange={e => setSheetsWebhookUrl(e.target.value)}
+                              className="flex-1 bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                            />
+                            <button
+                              type="submit"
+                              disabled={savingWebhook}
+                              className="px-5 py-2.5 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shrink-0"
+                            >
+                              {savingWebhook ? 'Saving...' : 'Save Webhook URL'}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-gray-500">
+                            Forwarded fields: <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Timestamp</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Name</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Email</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Roll/Dept</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Category</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Rating</code>, <code className="bg-stone-100 px-1 py-0.5 rounded text-stone-700">Message</code>.
+                          </p>
+                        </form>
+                      </div>
+                    )}
+
+                    {/* Summary Statistics Cards */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                      {/* Card 1 */}
+                      <div className="bg-white p-4 rounded-2xl border border-uday-peach/40 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Feedback</span>
+                          <div className="w-8 h-8 rounded-xl bg-uday-crimson/10 flex items-center justify-center text-uday-crimson">
+                            <MessageSquare className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="text-2xl sm:text-3xl font-serif font-black text-uday-midnight">
+                            {totalFeedbackCount}
+                          </div>
+                          <div className="text-[11px] text-gray-500 mt-0.5">
+                            {uniqueFeedbackEmails} unique {uniqueFeedbackEmails === 1 ? 'reader' : 'readers'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 2 */}
+                      <div className="bg-white p-4 rounded-2xl border border-uday-peach/40 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Average Rating</span>
+                          <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                            <Star className="w-4 h-4 fill-amber-500" />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="text-2xl sm:text-3xl font-serif font-black text-uday-midnight flex items-baseline gap-1">
+                            {avgFeedbackRating}
+                            <span className="text-xs text-gray-400 font-sans font-normal">/ 5.0</span>
+                          </div>
+                          <div className="flex items-center gap-0.5 mt-1 text-amber-500">
+                            {[1, 2, 3, 4, 5].map(starNum => (
+                              <Star
+                                key={starNum}
+                                className={`w-3 h-3 ${
+                                  starNum <= Math.round(Number(avgFeedbackRating))
+                                    ? 'fill-amber-400 text-amber-500'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 3 */}
+                      <div className="bg-white p-4 rounded-2xl border border-uday-peach/40 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Satisfaction</span>
+                          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                            <Sparkles className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="text-2xl sm:text-3xl font-serif font-black text-uday-midnight">
+                            {positiveSentimentPct}%
+                          </div>
+                          <div className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                            {fiveStarFeedbackCount + fourStarFeedbackCount} ratings with 4-5 stars
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card 4 */}
+                      <div className="bg-white p-4 rounded-2xl border border-uday-peach/40 shadow-sm flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">5-Star Reviews</span>
+                          <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <div className="text-2xl sm:text-3xl font-serif font-black text-uday-midnight">
+                            {fiveStarFeedbackCount}
+                          </div>
+                          <div className="text-[11px] text-gray-500 mt-0.5">
+                            {totalFeedbackCount > 0 ? Math.round((fiveStarFeedbackCount / totalFeedbackCount) * 100) : 0}% of all submissions
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </form>
 
-                  <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-uday-cream border-b border-gray-200 text-uday-midnight font-bold">
-                        <tr>
-                          <th className="p-3">Date</th>
-                          <th className="p-3">User & Email</th>
-                          <th className="p-3">Category</th>
-                          <th className="p-3">Rating</th>
-                          <th className="p-3">Message</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 text-gray-700">
-                        {feedbackList.map(item => (
-                          <tr key={item.id} className="hover:bg-gray-50">
-                            <td className="p-3 whitespace-nowrap text-[11px] text-gray-500">
-                              {new Date(item.timestamp).toLocaleDateString()}
-                            </td>
-                            <td className="p-3">
-                              <div className="font-bold text-uday-midnight">{item.name}</div>
-                              <div className="text-uday-crimson text-[11px]">{item.email}</div>
-                              {item.rollOrDept && <div className="text-gray-400 text-[10px]">{item.rollOrDept}</div>}
-                            </td>
-                            <td className="p-3 whitespace-nowrap font-medium text-uday-teal">{item.category}</td>
-                            <td className="p-3 whitespace-nowrap font-bold text-uday-orange">★ {item.rating}/5</td>
-                            <td className="p-3 text-[11px] max-w-xs">{item.message}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* Search and Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-uday-peach/50 shadow-sm space-y-3">
+                      <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                        {/* Search Input */}
+                        <div className="relative flex-1">
+                          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            placeholder="Search by name, email, department, or keyword in message..."
+                            value={feedbackSearch}
+                            onChange={e => setFeedbackSearch(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl pl-9 pr-9 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                          {feedbackSearch && (
+                            <button
+                              type="button"
+                              onClick={() => setFeedbackSearch('')}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Category Filter */}
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={feedbackCategoryFilter}
+                            onChange={e => setFeedbackCategoryFilter(e.target.value)}
+                            className="bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight font-medium focus:outline-none focus:border-uday-crimson"
+                          >
+                            <option value="ALL">All Categories</option>
+                            {feedbackCategories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+
+                          {/* Rating Filter */}
+                          <select
+                            value={feedbackRatingFilter}
+                            onChange={e => setFeedbackRatingFilter(e.target.value)}
+                            className="bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight font-medium focus:outline-none focus:border-uday-crimson"
+                          >
+                            <option value="ALL">All Ratings</option>
+                            <option value="5">★ 5 Stars Only</option>
+                            <option value="4">★ 4 Stars</option>
+                            <option value="3">★ 3 Stars</option>
+                            <option value="2">★ 2 Stars</option>
+                            <option value="1">★ 1 Star</option>
+                          </select>
+
+                          {/* Sort Order */}
+                          <select
+                            value={feedbackSortOrder}
+                            onChange={e => setFeedbackSortOrder(e.target.value as any)}
+                            className="bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight font-medium focus:outline-none focus:border-uday-crimson"
+                          >
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="rating_high">Highest Rated</option>
+                            <option value="rating_low">Lowest Rated</option>
+                          </select>
+
+                          {hasActiveFilters && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFeedbackSearch('');
+                                setFeedbackCategoryFilter('ALL');
+                                setFeedbackRatingFilter('ALL');
+                              }}
+                              className="px-3 py-2 text-xs font-bold text-uday-crimson hover:bg-uday-crimson/10 rounded-xl transition-colors whitespace-nowrap"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Result summary indicator */}
+                      <div className="flex items-center justify-between text-xs text-gray-500 pt-1 border-t border-gray-100">
+                        <div>
+                          Showing <strong className="text-uday-midnight">{filteredFeedback.length}</strong> of {totalFeedbackCount} responses
+                          {hasActiveFilters && <span className="text-uday-crimson font-medium ml-1">(filtered)</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Feedback Reader Cards Feed */}
+                    {filteredFeedback.length === 0 ? (
+                      <div className="bg-white rounded-2xl border border-uday-peach/40 p-12 text-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-400 mx-auto flex items-center justify-center">
+                          <MessageCircle className="w-6 h-6" />
+                        </div>
+                        <h4 className="font-serif text-lg font-bold text-uday-midnight">
+                          {hasActiveFilters ? 'No Matching Feedback Found' : 'No Feedback Responses Yet'}
+                        </h4>
+                        <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                          {hasActiveFilters
+                            ? 'Try clearing your search query or adjusting your category and star rating filters.'
+                            : 'When readers submit thoughts via the website feedback form, their messages will appear here.'}
+                        </p>
+                        {hasActiveFilters && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFeedbackSearch('');
+                              setFeedbackCategoryFilter('ALL');
+                              setFeedbackRatingFilter('ALL');
+                            }}
+                            className="mt-2 px-4 py-2 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold transition-colors"
+                          >
+                            Clear All Filters
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredFeedback.map(item => {
+                          const initials = (item.name || 'Anonymous')
+                            .split(' ')
+                            .map((n: string) => n[0])
+                            .slice(0, 2)
+                            .join('')
+                            .toUpperCase();
+                          const isCopied = copiedFeedbackId === item.id;
+                          const isDeleting = deletingFeedbackId === item.id;
+
+                          return (
+                            <div
+                              key={item.id}
+                              className="bg-white rounded-2xl border border-uday-peach/50 hover:border-uday-peach/90 shadow-sm hover:shadow-md transition-all p-5 space-y-4"
+                            >
+                              {/* Card Header */}
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                                <div className="flex items-center gap-3">
+                                  {/* Avatar Initials */}
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-uday-midnight to-uday-crimson text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                                    {initials}
+                                  </div>
+
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h4 className="font-serif text-base font-bold text-uday-midnight">
+                                        {item.name}
+                                      </h4>
+                                      {item.rollOrDept && (
+                                        <span className="bg-amber-50 text-amber-900 border border-amber-200/70 text-[11px] font-semibold px-2 py-0.5 rounded-full">
+                                          {item.rollOrDept}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <a
+                                      href={`mailto:${item.email}`}
+                                      className="inline-flex items-center gap-1 text-xs text-uday-crimson hover:underline mt-0.5"
+                                    >
+                                      <Mail className="w-3 h-3" />
+                                      <span>{item.email}</span>
+                                    </a>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                                  {/* Category Badge */}
+                                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                                    {item.category || 'General Feedback'}
+                                  </span>
+
+                                  {/* Star Rating Badge */}
+                                  <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 text-amber-900 px-2.5 py-1 rounded-full text-xs font-bold">
+                                    <span className="text-amber-500 font-bold">★</span>
+                                    <span>{item.rating}/5</span>
+                                  </div>
+
+                                  {/* Timestamp */}
+                                  <div className="flex items-center gap-1 text-[11px] text-gray-400 pl-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>
+                                      {new Date(item.timestamp).toLocaleDateString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                      })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Reader Message Content */}
+                              <div className="bg-[#FAF7F2] rounded-xl p-4 sm:p-5 border border-uday-peach/30 text-uday-midnight text-sm sm:text-base leading-relaxed whitespace-pre-wrap font-sans select-text">
+                                {item.message}
+                              </div>
+
+                              {/* Card Footer Toolbar */}
+                              <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center gap-2">
+                                  {/* Copy Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyFeedback(item)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                      isCopied
+                                        ? 'bg-emerald-100 text-emerald-800'
+                                        : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                                    }`}
+                                  >
+                                    {isCopied ? (
+                                      <>
+                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Copied!</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3.5 h-3.5" />
+                                        <span>Copy Text</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  {/* Direct Email Reply */}
+                                  <a
+                                    href={`mailto:${item.email}?subject=Regarding your Uday Magazine feedback`}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 transition-colors"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                    <span>Reply via Email</span>
+                                  </a>
+                                </div>
+
+                                {/* Delete Button */}
+                                <button
+                                  type="button"
+                                  disabled={isDeleting}
+                                  onClick={() => handleDeleteFeedback(item.id)}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* TAB 5: NOTIFICATION LOGS */}
               {activeTab === 'emails' && (
