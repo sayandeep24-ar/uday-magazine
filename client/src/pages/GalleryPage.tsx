@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Camera, Maximize2, X, ExternalLink, Sparkles, Lock, Trash2, ShieldAlert } from 'lucide-react';
+import { Camera, Maximize2, X, ExternalLink } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 
 interface GalleryPageProps {
@@ -12,7 +11,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ gallery, onRefreshGall
   const [items, setItems] = useState<GalleryItem[]>(gallery);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [lightboxItem, setLightboxItem] = useState<GalleryItem | null>(null);
-  const adminToken = localStorage.getItem('uday_admin_token');
 
   useEffect(() => {
     setItems(gallery);
@@ -23,39 +21,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ gallery, onRefreshGall
   const filteredGallery = selectedCategory === 'All'
     ? items
     : items.filter(item => item.category === selectedCategory);
-
-  const handleDeleteImage = async (id: string, title: string) => {
-    if (!adminToken) {
-      alert("Admin authentication required. Please log into the Admin portal first.");
-      return;
-    }
-    if (!confirm(`Are you sure you want to permanently delete "${title}" from the gallery?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/gallery/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${adminToken}` }
-      });
-
-      if (res.ok) {
-        alert(`Image "${title}" deleted successfully.`);
-        setItems(prev => prev.filter(item => item.id !== id));
-        if (lightboxItem?.id === id) {
-          setLightboxItem(null);
-        }
-        if (onRefreshGallery) {
-          onRefreshGallery();
-        }
-      } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Failed to delete image.');
-      }
-    } catch (err) {
-      alert('Network error while deleting image.');
-    }
-  };
 
   return (
     <div className="pt-28 pb-20 space-y-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,23 +37,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ gallery, onRefreshGall
           <p className="text-sm sm:text-base text-uday-midnight/70 leading-relaxed">
             A curated visual chronicle of the IISER Bhopal campus, biological landscapes, seasonal colors, and student fine arts from Volume 11 and ongoing creative submissions.
           </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
-          <Link
-            to="/admin"
-            className="flex items-center gap-2 bg-white border-2 border-uday-peach hover:border-uday-teal text-uday-teal text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Admin: Upload / GDrive Sync</span>
-          </Link>
-
-          {adminToken && (
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-2 rounded-xl border border-emerald-300">
-              <ShieldAlert className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Admin Mode: Delete Buttons Enabled</span>
-            </div>
-          )}
         </div>
       </div>
 
@@ -123,22 +71,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ gallery, onRefreshGall
               className="w-full h-full object-cover group-hover:scale-105 group-hover:opacity-90 transition-all duration-500"
               loading="lazy"
             />
-            
-            {/* Admin Delete Button on Card */}
-            {adminToken && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteImage(item.id, item.title);
-                }}
-                className="absolute top-3 left-3 z-20 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 transition-all"
-                title="Permanently remove image"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Image</span>
-              </button>
-            )}
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-85 group-hover:opacity-95 transition-opacity p-5 flex flex-col justify-end text-white pointer-events-none">
               <span className="text-[10px] font-bold uppercase tracking-wider text-uday-peach bg-black/40 px-2 py-0.5 rounded w-fit mb-1">
@@ -199,15 +131,6 @@ export const GalleryPage: React.FC<GalleryPageProps> = ({ gallery, onRefreshGall
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                {adminToken && (
-                  <button
-                    onClick={() => handleDeleteImage(lightboxItem.id, lightboxItem.title)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 transition-colors shadow-md"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete Image
-                  </button>
-                )}
-
                 <a
                   href={lightboxItem.url}
                   target="_blank"

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen, Download, Eye, Sparkles, Music, Bookmark, ChevronRight, FileText, Lock, Trash2, ShieldAlert, Maximize2, X, ExternalLink } from 'lucide-react';
+import { BookOpen, Download, Eye, Sparkles, Music, Bookmark, ChevronRight, FileText, Maximize2, X, ExternalLink } from 'lucide-react';
 import { FEATURED_ARTICLES, SECTION_DETAILS, EDITOR_LETTER, Article } from '../data/publicationData';
 
 interface MagazineEdition {
@@ -35,7 +34,6 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
   const [showEditorLetter, setShowEditorLetter] = useState<boolean>(false);
   const [activeReaderMag, setActiveReaderMag] = useState<MagazineEdition | null>(null);
   const [showReader, setShowReader] = useState<boolean>(false);
-  const adminToken = localStorage.getItem('uday_admin_token');
 
   const loadMagazines = () => {
     fetch('/api/magazines')
@@ -53,29 +51,6 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
   useEffect(() => {
     loadMagazines();
   }, []);
-
-  const handleDeleteMagazine = async (id: string, title: string) => {
-    if (!adminToken) {
-      alert("Admin authentication required. Please log into the Admin portal first.");
-      return;
-    }
-    if (!confirm(`Are you sure you want to permanently delete "${title}"?`)) return;
-
-    try {
-      const res = await fetch(`/api/magazines/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${adminToken}` }
-      });
-      if (res.ok) {
-        alert(`Magazine "${title}" removed successfully.`);
-        loadMagazines();
-      } else {
-        alert("Failed to delete magazine issue.");
-      }
-    } catch (err) {
-      alert("Network error while deleting magazine.");
-    }
-  };
 
   const sections = ['All', 'Hindol', 'Deepak', 'Megha', 'Shri', 'Photographs', 'Artwork'];
 
@@ -100,23 +75,6 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
         <p className="text-sm sm:text-base text-uday-midnight/70 max-w-2xl mx-auto leading-relaxed">
           The curated print and digital repository of UDAY Magazine. Read complete editions, download high-resolution PDFs, and explore featured literature and art.
         </p>
-
-        {/* Admin Callout / Status */}
-        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/admin"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-uday-teal hover:text-uday-midnight bg-uday-teal/10 hover:bg-uday-teal/20 px-4 py-2 rounded-xl transition-all border border-uday-teal/20"
-          >
-            <Lock className="w-3.5 h-3.5" /> Admin: Upload New Magazine PDF
-          </Link>
-
-          {adminToken && (
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-2 rounded-xl border border-emerald-300">
-              <ShieldAlert className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Admin Mode Active: Delete Options Enabled</span>
-            </div>
-          )}
-        </div>
       </section>
 
       {/* Latest Featured Release Spotlight */}
@@ -206,18 +164,6 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
                     <Eye className="w-4 h-4" />
                     <span>{showEditorLetter ? 'Hide Editor’s Note' : 'Read Chief Editor’s Note'}</span>
                   </button>
-
-                  {/* ADMIN DELETE BUTTON ON FEATURED ISSUE */}
-                  {adminToken && (
-                    <button
-                      onClick={() => handleDeleteMagazine(latestMagazine.id, latestMagazine.title)}
-                      className="px-5 py-3 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
-                      title="Delete this magazine volume"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                      <span>Delete Volume (Admin)</span>
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -459,18 +405,6 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
                     </>
                   ) : (
                     <span className="text-xs text-gray-400">Print</span>
-                  )}
-
-                  {/* ADMIN DELETE BUTTON ON ARCHIVE CARDS */}
-                  {adminToken && (
-                    <button
-                      onClick={() => handleDeleteMagazine(vol.id, vol.title)}
-                      className="text-red-600 hover:text-red-800 p-1.5 rounded-lg hover:bg-red-50 flex items-center gap-1 text-xs font-bold transition-colors"
-                      title="Delete this volume (Admin)"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Delete</span>
-                    </button>
                   )}
                 </div>
               </div>

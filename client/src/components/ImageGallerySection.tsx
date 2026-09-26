@@ -13,7 +13,7 @@ export interface GalleryItem {
 
 interface ImageGallerySectionProps {
   gallery: GalleryItem[];
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const ImageGallerySection: React.FC<ImageGallerySectionProps> = ({ gallery, onOpenAdmin }) => {
@@ -44,15 +44,17 @@ export const ImageGallerySection: React.FC<ImageGallerySectionProps> = ({ galler
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onOpenAdmin}
-              className="flex items-center gap-1.5 bg-white border-2 border-uday-peach hover:border-uday-teal text-uday-teal text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Admin: Add via GDrive / Upload</span>
-            </button>
-          </div>
+          {onOpenAdmin && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onOpenAdmin}
+                className="flex items-center gap-1.5 bg-white border-2 border-uday-peach hover:border-uday-teal text-uday-teal text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Admin: Add via GDrive / Upload</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Category Filters */}
