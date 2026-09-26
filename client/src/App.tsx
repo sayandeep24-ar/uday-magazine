@@ -197,6 +197,7 @@ function AppContent() {
                 blogs={blogs}
                 gallery={gallery}
                 events={events}
+                announcements={announcements}
                 magazines={magazines}
                 onReadBlog={(blog) => setSelectedBlog(blog)}
               />

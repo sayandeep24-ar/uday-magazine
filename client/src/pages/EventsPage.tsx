@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, ChevronRight, Bell, CheckCircle2, ExternalLink, Megaphone } from 'lucide-react';
 
 interface EventsPageProps {
@@ -9,9 +9,42 @@ interface EventsPageProps {
   announcements?: any[];
 }
 
-export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements }) => {
+export const EventsPage: React.FC<EventsPageProps> = ({ events: propEvents, announcements: propAnnouncements }) => {
+  const [internalEvents, setInternalEvents] = useState(propEvents || { upcoming: [], past: [] });
+  const [internalAnnouncements, setInternalAnnouncements] = useState<any[]>(propAnnouncements || []);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [rsvpState, setRsvpState] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (propEvents && (propEvents.upcoming?.length > 0 || propEvents.past?.length > 0)) {
+      setInternalEvents(propEvents);
+    }
+  }, [propEvents]);
+
+  useEffect(() => {
+    if (propAnnouncements && propAnnouncements.length > 0) {
+      setInternalAnnouncements(propAnnouncements);
+    }
+  }, [propAnnouncements]);
+
+  useEffect(() => {
+    if (!propEvents || (!propEvents.upcoming?.length && !propEvents.past?.length)) {
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(data => {
+          if (data.events) setInternalEvents(data.events);
+        })
+        .catch(() => {});
+    }
+    if (!propAnnouncements || propAnnouncements.length === 0) {
+      fetch('/api/announcements')
+        .then(res => res.json())
+        .then(data => {
+          if (data.announcements) setInternalAnnouncements(data.announcements);
+        })
+        .catch(() => {});
+    }
+  }, []);
 
   const handleRsvp = (id: string) => {
     setRsvpState(prev => ({ ...prev, [id]: true }));
@@ -20,7 +53,9 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
     }, 100);
   };
 
-  const activeAnnouncements = (announcements || []).filter(a => a.active !== false);
+  const upcomingList = internalEvents?.upcoming || [];
+  const pastList = internalEvents?.past || [];
+  const activeAnnouncements = (internalAnnouncements || []).filter(a => a.active !== false);
 
   return (
     <div className="pt-28 pb-20 space-y-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,7 +85,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
             }`}
           >
             <Bell className="w-4 h-4" />
-            <span>Upcoming ({events.upcoming?.length || 0})</span>
+            <span>Upcoming ({upcomingList.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('past')}
@@ -61,7 +96,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
             }`}
           >
             <Calendar className="w-4 h-4" />
-            <span>Past Archives ({events.past?.length || 0})</span>
+            <span>Past Archives ({pastList.length})</span>
           </button>
         </div>
       </div>
@@ -108,8 +143,18 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
 
       {/* Tab 1: Upcoming */}
       {activeTab === 'upcoming' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
-          {(events.upcoming || []).map(event => (
+        <div className="space-y-6 animate-fadeIn">
+          {upcomingList.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-3xl border border-uday-peach/40 space-y-3">
+              <Calendar className="w-10 h-10 text-uday-crimson/50 mx-auto" />
+              <h4 className="font-serif font-bold text-lg text-uday-midnight">No Upcoming Events Scheduled Yet</h4>
+              <p className="text-xs text-uday-midnight/60 max-w-md mx-auto">
+                Check back soon for new literary events, writing workshops, and release sessions.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {upcomingList.map(event => (
             <div
               key={event.id}
               className="bg-white rounded-3xl border border-uday-peach/60 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
@@ -216,11 +261,13 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
           ))}
         </div>
       )}
+    </div>
+  )}
 
       {/* Tab 2: Past */}
       {activeTab === 'past' && (
         <div className="space-y-6 animate-fadeIn">
-          {(!events.past || events.past.length === 0) ? (
+          {pastList.length === 0 ? (
             <div className="p-12 text-center bg-white rounded-3xl border border-uday-peach/40 space-y-3">
               <Calendar className="w-10 h-10 text-uday-teal/50 mx-auto" />
               <h4 className="font-serif font-bold text-lg text-uday-midnight">No Past Events Archived Yet</h4>
@@ -230,7 +277,7 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events, announcements })
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {events.past.map(pevent => (
+              {pastList.map(pevent => (
                 <div
                   key={pevent.id}
                   className="bg-white rounded-3xl border border-uday-peach/50 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"

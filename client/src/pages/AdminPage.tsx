@@ -76,8 +76,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [eventLinkText, setEventLinkText] = useState('RSVP Online');
   const [eventImageFile, setEventImageFile] = useState<File | null>(null);
   const [eventImageUrl, setEventImageUrl] = useState('');
+  const [eventStatus, setEventStatus] = useState<'upcoming' | 'past'>('upcoming');
   const [uploadingEvent, setUploadingEvent] = useState(false);
   const [eventSuccessMsg, setEventSuccessMsg] = useState('');
+
+  const parseEventsList = (raw: any): any[] => {
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object') {
+      const up = Array.isArray(raw.upcoming) ? raw.upcoming.map((e: any) => ({ ...e, eventType: 'upcoming' })) : [];
+      const pa = Array.isArray(raw.past) ? raw.past.map((e: any) => ({ ...e, eventType: 'past' })) : [];
+      return [...up, ...pa];
+    }
+    return [];
+  };
 
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementTag, setAnnouncementTag] = useState('Call for Submissions');
@@ -170,14 +181,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       const resEvents = await fetch('/api/events');
       if (resEvents.ok) {
         const data = await resEvents.json();
-        setEventsList(data.events || []);
+        setEventsList(parseEventsList(data.events));
       }
 
       // Announcements
-      const resAnn = await fetch('/api/announcements');
+      const resAnn = await fetch('/api/admin/announcements', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (resAnn.ok) {
         const data = await resAnn.json();
         setAnnouncementsList(data.announcements || []);
+      } else {
+        const resPublicAnn = await fetch('/api/announcements');
+        if (resPublicAnn.ok) {
+          const data = await resPublicAnn.json();
+          setAnnouncementsList(data.announcements || []);
+        }
       }
 
       // Blogs
@@ -498,7 +517,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       formData.append('description', eventDesc.trim());
       formData.append('link', eventLink.trim());
       formData.append('linkText', eventLinkText.trim() || 'RSVP Online');
+      formData.append('status', eventStatus);
       if (eventImageFile) {
+        formData.append('image', eventImageFile);
         formData.append('eventImage', eventImageFile);
       } else if (eventImageUrl.trim()) {
         formData.append('imageUrl', eventImageUrl.trim());
@@ -512,8 +533,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create event');
 
-      setEventSuccessMsg('Event successfully published with cover image & link!');
-      setEventsList(data.events || []);
+      setEventSuccessMsg(`Event successfully published to ${eventStatus === 'past' ? 'Past Archives' : 'Upcoming Events'}!`);
+      setEventsList(parseEventsList(data.events));
       setEventTitle('');
       setEventDate('');
       setEventTime('');
@@ -524,6 +545,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       setEventLinkText('RSVP Online');
       setEventImageFile(null);
       setEventImageUrl('');
+      setEventStatus('upcoming');
       setTimeout(() => setEventSuccessMsg(''), 5000);
     } catch (err: any) {
       alert('Error creating event: ' + err.message);
@@ -541,9 +563,31 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to delete event');
-      setEventsList(data.events || []);
+      setEventsList(parseEventsList(data.events));
     } catch (err: any) {
       alert('Error deleting event: ' + err.message);
+    }
+  };
+
+  const handleToggleEventStatus = async (id: string, currentType?: string) => {
+    const isPast = currentType === 'past' || id.startsWith('pev');
+    const targetEndpoint = isPast 
+      ? `/api/admin/events/${id}/mark-upcoming` 
+      : `/api/admin/events/${id}/mark-past`;
+    try {
+      const res = await fetch(targetEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update event status');
+      setEventsList(parseEventsList(data.events));
+    } catch (err: any) {
+      alert('Error updating event status: ' + err.message);
     }
   };
 
@@ -2168,6 +2212,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                         </div>
 
                         <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Schedule Section / Status</label>
+                          <select
+                            value={eventStatus}
+                            onChange={e => setEventStatus(e.target.value as 'upcoming' | 'past')}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-medium"
+                          >
+                            <option value="upcoming">Upcoming Events (Active / Live)</option>
+                            <option value="past">Past Events Archive</option>
+                          </select>
+                        </div>
+
+                        <div>
                           <label className="block text-xs font-bold text-uday-midnight mb-1">Date String *</label>
                           <input
                             type="text"
@@ -2289,9 +2345,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                                   </div>
                                 )}
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-uday-crimson uppercase tracking-wider bg-uday-crimson/10 px-2 py-0.5 rounded">
-                                    {ev.category || 'Event'}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                      (ev.eventType === 'past' || ev.id.startsWith('pev'))
+                                        ? 'text-uday-teal bg-uday-teal/10 border border-uday-teal/30'
+                                        : 'text-emerald-700 bg-emerald-100 border border-emerald-300'
+                                    }`}>
+                                      {(ev.eventType === 'past' || ev.id.startsWith('pev')) ? 'Past Archive' : 'Upcoming Event'}
+                                    </span>
+                                    <span className="text-[10px] font-bold text-uday-crimson uppercase tracking-wider bg-uday-crimson/10 px-2 py-0.5 rounded">
+                                      {ev.category || 'Event'}
+                                    </span>
+                                  </div>
                                   <span className="text-xs font-semibold text-uday-midnight/70">{ev.date}</span>
                                 </div>
                                 <h5 className="font-serif font-bold text-sm text-uday-midnight">{ev.title}</h5>
@@ -2304,17 +2369,27 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                                 )}
                               </div>
 
-                              <div className="pt-2 border-t border-uday-peach/30 flex items-center justify-between">
+                              <div className="pt-2 border-t border-uday-peach/30 flex flex-wrap items-center justify-between gap-2">
                                 <span className="text-[11px] text-gray-500">{ev.time} • {ev.venue}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteEvent(ev.id)}
-                                  className="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-                                  title="Delete Event"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Delete</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleEventStatus(ev.id, ev.eventType)}
+                                    className="px-2.5 py-1.5 text-uday-teal bg-uday-teal/10 hover:bg-uday-teal hover:text-white rounded-lg text-xs font-bold transition-all border border-uday-teal/20"
+                                    title="Toggle between Upcoming and Past Archives"
+                                  >
+                                    {(ev.eventType === 'past' || ev.id.startsWith('pev')) ? 'Make Upcoming' : 'Mark as Past'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteEvent(ev.id)}
+                                    className="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                                    title="Delete Event"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           ))}

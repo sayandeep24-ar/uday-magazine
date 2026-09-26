@@ -10,6 +10,7 @@ interface HomePageProps {
   blogs: BlogItem[];
   gallery: GalleryItem[];
   events: { upcoming: any[]; past: any[] };
+  announcements?: any[];
   onReadBlog: (blog: BlogItem) => void;
   magazines?: any[];
 }
@@ -19,6 +20,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   blogs,
   gallery,
   events,
+  announcements = [],
   onReadBlog,
   magazines = []
 }) => {
@@ -339,7 +341,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* 5. EVENTS & PAST ARCHIVES HIGHLIGHT */}
-      <EventsAndAnnouncementsSection events={events} />
+      <EventsAndAnnouncementsSection events={events} announcements={announcements} />
 
     </div>
   );

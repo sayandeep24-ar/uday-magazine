@@ -360,7 +360,7 @@ app.get('/api/health', (req, res) => {
 // Announcements
 app.get('/api/announcements', (req, res) => {
   const data = readData();
-  const activeAnnouncements = (data.announcements || []).filter(a => a.active);
+  const activeAnnouncements = (data.announcements || []).filter(a => a.active !== false);
   res.json({ announcements: activeAnnouncements });
 });
 
@@ -1210,7 +1210,7 @@ app.post('/api/admin/announcements/:id/toggle', requireAdmin, (req, res) => {
 // --- Events Admin Endpoints ---
 
 // Create or update an Event (Upcoming or Past)
-app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) => {
+app.post('/api/admin/events', requireAdmin, upload.any(), (req, res) => {
   const {
     id, title, category, date, time, venue, description, badge, cta,
     status, attendees, link, linkText, imageUrl, type
@@ -1224,8 +1224,9 @@ app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) =
   if (!Array.isArray(data.events.past)) data.events.past = [];
 
   let finalImage = imageUrl ? imageUrl.trim() : '';
-  if (req.file) {
-    finalImage = `/uploads/${req.file.filename}`;
+  const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
+  if (uploadedFile) {
+    finalImage = `/uploads/${uploadedFile.filename}`;
   }
   if (!finalImage) {
     finalImage = 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
@@ -1304,7 +1305,7 @@ app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) =
 });
 
 // Edit an existing Event
-app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res) => {
+app.put('/api/admin/events/:id', requireAdmin, upload.any(), (req, res) => {
   const { id } = req.params;
   const {
     title, category, date, time, venue, description, badge, cta,
@@ -1346,8 +1347,9 @@ app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res
   if (link !== undefined) existingEvent.link = link.trim();
   if (linkText !== undefined) existingEvent.linkText = linkText.trim();
   if (imageUrl) existingEvent.image = imageUrl.trim();
-  if (req.file) {
-    existingEvent.image = `/uploads/${req.file.filename}`;
+  const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
+  if (uploadedFile) {
+    existingEvent.image = `/uploads/${uploadedFile.filename}`;
   }
   existingEvent.updatedAt = new Date().toISOString();
 
