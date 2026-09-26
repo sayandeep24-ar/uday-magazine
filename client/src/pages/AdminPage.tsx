@@ -4,7 +4,7 @@ import {
   Key, LogOut, Check, Clock, Trash2, ExternalLink, Mail, FolderUp,
   PlusCircle, Download, RefreshCw, AlertCircle, CheckCircle2, Upload, FileText,
   Users, UserCheck, Edit3, Plus, Save, Phone, MapPin, Eye, EyeOff,
-  Calendar, Bell, Star, X, ArrowRight
+  Calendar, Bell, Sparkles, Bookmark
 } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 import { EDITORIAL_BOARD, TeamAndContact, LeadTeamMember } from '../data/publicationData';
@@ -24,7 +24,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [loading, setLoading] = useState(false);
 
   // Active Admin Tab
-  const [activeTab, setActiveTab] = useState<'magazines' | 'events' | 'announcements' | 'blogs' | 'gallery' | 'team' | 'feedback' | 'security' | 'emails'>('magazines');
+  const [activeTab, setActiveTab] = useState<'magazines' | 'blogs' | 'gallery' | 'team' | 'events' | 'feedback' | 'security' | 'emails'>('magazines');
 
   // Magazine PDF Upload State
   const [magVolume, setMagVolume] = useState('');
@@ -41,6 +41,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [magazinesList, setMagazinesList] = useState<any[]>([]);
   const [uploadingMagazine, setUploadingMagazine] = useState(false);
 
+  // Chief Editor's Note Editor State
+  const [selectedMagIdForNote, setSelectedMagIdForNote] = useState('');
+  const [editorNoteTitle, setEditorNoteTitle] = useState('');
+  const [editorNoteAuthor, setEditorNoteAuthor] = useState('');
+  const [editorNoteRole, setEditorNoteRole] = useState('');
+  const [editorNoteText, setEditorNoteText] = useState('');
+  const [savingEditorNote, setSavingEditorNote] = useState(false);
+  const [editorNoteMsg, setEditorNoteMsg] = useState('');
+
   // Blog management state
   const [adminBlogs, setAdminBlogs] = useState<any[]>([]);
 
@@ -54,6 +63,29 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [galleryList, setGalleryList] = useState<GalleryItem[]>([]);
 
+  // Events and Announcements State
+  const [eventsList, setEventsList] = useState<any[]>([]);
+  const [announcementsList, setAnnouncementsList] = useState<any[]>([]);
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventDate, setEventDate] = useState('');
+  const [eventTime, setEventTime] = useState('');
+  const [eventVenue, setEventVenue] = useState('');
+  const [eventCategory, setEventCategory] = useState('Featured Event');
+  const [eventDesc, setEventDesc] = useState('');
+  const [eventLink, setEventLink] = useState('');
+  const [eventLinkText, setEventLinkText] = useState('RSVP Online');
+  const [eventImageFile, setEventImageFile] = useState<File | null>(null);
+  const [eventImageUrl, setEventImageUrl] = useState('');
+  const [uploadingEvent, setUploadingEvent] = useState(false);
+  const [eventSuccessMsg, setEventSuccessMsg] = useState('');
+
+  const [announcementText, setAnnouncementText] = useState('');
+  const [announcementTag, setAnnouncementTag] = useState('Call for Submissions');
+  const [announcementLinkUrl, setAnnouncementLinkUrl] = useState('');
+  const [announcementLinkText, setAnnouncementLinkText] = useState('');
+  const [uploadingAnnouncement, setUploadingAnnouncement] = useState(false);
+  const [announcementSuccessMsg, setAnnouncementSuccessMsg] = useState('');
+
   // Feedback state
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
   const [sheetsWebhookUrl, setSheetsWebhookUrl] = useState('');
@@ -62,7 +94,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   // Email Logs
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
 
-  // Password Change state
+  // Password Change & Cloud Persistence State
   const [currPass, setCurrPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -71,6 +103,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [resetToken, setResetToken] = useState('');
   const [passMsg, setPassMsg] = useState({ text: '', isError: false });
   const [passLoading, setPassLoading] = useState(false);
+  const [githubTokenInput, setGithubTokenInput] = useState('');
+  const [savingGithubToken, setSavingGithubToken] = useState(false);
+  const [githubSyncMsg, setGithubSyncMsg] = useState('');
  
   // Directory, Faculty Advisor, and Team Management state
   const [teamData, setTeamData] = useState<TeamAndContact>(EDITORIAL_BOARD);
@@ -81,6 +116,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [englishText, setEnglishText] = useState(EDITORIAL_BOARD.editorialEnglish.join('\n'));
   const [hindiText, setHindiText] = useState(EDITORIAL_BOARD.editorialHindi.join('\n'));
   const [reportersText, setReportersText] = useState(EDITORIAL_BOARD.reporters.join('\n'));
+  const [prText, setPrText] = useState((EDITORIAL_BOARD.prTeam || []).join('\n'));
   const [designersText, setDesignersText] = useState(EDITORIAL_BOARD.designers.join('\n'));
   const [advisorsText, setAdvisorsText] = useState(EDITORIAL_BOARD.studentAdvisors.join('\n'));
 
@@ -90,39 +126,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [newLeadRole, setNewLeadRole] = useState('');
   const [newLeadMajor, setNewLeadMajor] = useState('');
   const [newLeadBio, setNewLeadBio] = useState('');
-
-  // Announcements Admin State
-  const [announcementsList, setAnnouncementsList] = useState<any[]>([]);
-  const [newAnnText, setNewAnnText] = useState('');
-  const [newAnnTag, setNewAnnTag] = useState('SUBMISSIONS');
-  const [newAnnActive, setNewAnnActive] = useState(true);
-  const [newAnnLink, setNewAnnLink] = useState('');
-  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<any | null>(null);
-
-  // Events Admin State
-  const [eventsData, setEventsData] = useState<{ upcoming: any[]; past: any[] }>({ upcoming: [], past: [] });
-  const [eventTitle, setEventTitle] = useState('');
-  const [eventCategory, setEventCategory] = useState('Campus Event');
-  const [eventDate, setEventDate] = useState('');
-  const [eventTime, setEventTime] = useState('');
-  const [eventVenue, setEventVenue] = useState('IISER Bhopal Campus');
-  const [eventDesc, setEventDesc] = useState('');
-  const [eventBadge, setEventBadge] = useState('');
-  const [eventCta, setEventCta] = useState('RSVP Free');
-  const [eventStatus, setEventStatus] = useState<'upcoming' | 'past'>('upcoming');
-  const [eventAttendees, setEventAttendees] = useState('');
-  const [eventImageUrl, setEventImageUrl] = useState('');
-  const [eventImageFile, setEventImageFile] = useState<File | null>(null);
-  const [savingEvent, setSavingEvent] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<any | null>(null);
-  const [markingPastEvent, setMarkingPastEvent] = useState<any | null>(null);
-  const [pastAttendeesInput, setPastAttendeesInput] = useState('300+ Students & Faculty');
-  const [pastImageUrlInput, setPastImageUrlInput] = useState('');
-
-  // Edit Magazine State
-  const [editingMagazine, setEditingMagazine] = useState<any | null>(null);
-  const [savingEditMag, setSavingEditMag] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -149,7 +152,32 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       const resMag = await fetch('/api/magazines');
       if (resMag.ok) {
         const data = await resMag.json();
-        setMagazinesList(data.magazines || []);
+        const mags = data.magazines || [];
+        setMagazinesList(mags);
+        if (mags.length > 0 && !selectedMagIdForNote) {
+          const featured = mags.find((m: any) => m.isLatest) || mags[0];
+          setSelectedMagIdForNote(featured.id);
+          if (featured.editorNote) {
+            setEditorNoteTitle(featured.editorNote.title || '');
+            setEditorNoteAuthor(featured.editorNote.author || '');
+            setEditorNoteRole(featured.editorNote.role || '');
+            setEditorNoteText(featured.editorNote.text || '');
+          }
+        }
+      }
+
+      // Events
+      const resEvents = await fetch('/api/events');
+      if (resEvents.ok) {
+        const data = await resEvents.json();
+        setEventsList(data.events || []);
+      }
+
+      // Announcements
+      const resAnn = await fetch('/api/announcements');
+      if (resAnn.ok) {
+        const data = await resAnn.json();
+        setAnnouncementsList(data.announcements || []);
       }
 
       // Blogs
@@ -194,6 +222,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         if (data.settings?.googleSheetsWebhookUrl) {
           setSheetsWebhookUrl(data.settings.googleSheetsWebhookUrl);
         }
+        if (data.settings?.githubToken) {
+          setGithubTokenInput(data.settings.githubToken);
+        }
       }
 
       // Email logs
@@ -214,25 +245,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
           setEnglishText((data.teamAndContact.editorialEnglish || []).join('\n'));
           setHindiText((data.teamAndContact.editorialHindi || []).join('\n'));
           setReportersText((data.teamAndContact.reporters || []).join('\n'));
+          setPrText((data.teamAndContact.prTeam || []).join('\n'));
           setDesignersText((data.teamAndContact.designers || []).join('\n'));
           setAdvisorsText((data.teamAndContact.studentAdvisors || []).join('\n'));
         }
-      }
-
-      // Announcements
-      const resAnn = await fetch('/api/admin/announcements', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (resAnn.ok) {
-        const data = await resAnn.json();
-        setAnnouncementsList(data.announcements || []);
-      }
-
-      // Events
-      const resEv = await fetch('/api/events');
-      if (resEv.ok) {
-        const data = await resEv.json();
-        setEventsData(data.events || { upcoming: [], past: [] });
       }
     } catch (err) {
       console.error('Error fetching admin data:', err);
@@ -283,6 +299,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         editorialEnglish: englishText.split('\n').map(s => s.trim()).filter(Boolean),
         editorialHindi: hindiText.split('\n').map(s => s.trim()).filter(Boolean),
         reporters: reportersText.split('\n').map(s => s.trim()).filter(Boolean),
+        prTeam: prText.split('\n').map(s => s.trim()).filter(Boolean),
         designers: designersText.split('\n').map(s => s.trim()).filter(Boolean),
         studentAdvisors: advisorsText.split('\n').map(s => s.trim()).filter(Boolean)
       };
@@ -404,166 +421,86 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        loadAllAdminData();
-        if (onRefreshGlobalData) onRefreshGlobalData();
-      }
+      if (res.ok) loadAllAdminData();
     } catch (err) {
       alert('Delete failed');
     }
   };
 
-  const handleFeatureMagazine = async (id: string, title: string) => {
-    try {
-      const res = await fetch(`/api/admin/magazines/${id}/feature`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to feature magazine');
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert(`"${title}" is now featured on the front page as the latest edition!`);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleUpdateMagazine = async (e: React.FormEvent) => {
+  // Chief Editor's Note Handlers
+  const handleSaveEditorNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMagazine) return;
-    setSavingEditMag(true);
-    try {
-      const res = await fetch(`/api/admin/magazines/${editingMagazine.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(editingMagazine)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update magazine');
-      setEditingMagazine(null);
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert('Magazine details updated successfully!');
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setSavingEditMag(false);
+    if (!selectedMagIdForNote) {
+      alert("Please select a magazine volume first.");
+      return;
     }
-  };
-
-  // --- Announcements Handlers ---
-  const handleCreateAnnouncement = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAnnText.trim()) return;
-    setSavingAnnouncement(true);
+    setSavingEditorNote(true);
+    setEditorNoteMsg('');
     try {
-      const res = await fetch('/api/admin/announcements', {
+      const res = await fetch(`/api/admin/magazines/${selectedMagIdForNote}/editor-note`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          text: newAnnText.trim(),
-          tag: newAnnTag,
-          active: newAnnActive,
-          link: newAnnLink.trim() || undefined
+          title: editorNoteTitle.trim(),
+          author: editorNoteAuthor.trim(),
+          role: editorNoteRole.trim(),
+          text: editorNoteText.trim()
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create announcement');
-      setNewAnnText('');
-      setNewAnnLink('');
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert('Announcement published successfully!');
+      if (!res.ok) throw new Error(data.error || "Failed to update Chief Editor's Note");
+
+      setEditorNoteMsg("Chief Editor's Note successfully published! It is live on the /magazines page.");
+      setMagazinesList(data.magazines || []);
+      setTimeout(() => setEditorNoteMsg(''), 5000);
     } catch (err: any) {
-      alert(err.message);
+      alert("Error saving Editor's Note: " + err.message);
     } finally {
-      setSavingAnnouncement(false);
+      setSavingEditorNote(false);
     }
   };
 
-  const handleUpdateAnnouncement = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingAnnouncement) return;
-    try {
-      const res = await fetch(`/api/admin/announcements/${editingAnnouncement.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(editingAnnouncement)
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update announcement');
-      setEditingAnnouncement(null);
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert('Announcement updated successfully!');
-    } catch (err: any) {
-      alert(err.message);
+  const handleSelectMagazineForNote = (magId: string) => {
+    setSelectedMagIdForNote(magId);
+    const mag = magazinesList.find(m => m.id === magId);
+    if (mag && mag.editorNote) {
+      setEditorNoteTitle(mag.editorNote.title || '');
+      setEditorNoteAuthor(mag.editorNote.author || '');
+      setEditorNoteRole(mag.editorNote.role || '');
+      setEditorNoteText(mag.editorNote.text || '');
+    } else {
+      setEditorNoteTitle('');
+      setEditorNoteAuthor('');
+      setEditorNoteRole('');
+      setEditorNoteText('');
     }
   };
 
-  const handleDeleteAnnouncement = async (id: string, text: string) => {
-    if (!confirm(`Are you sure you want to delete this announcement:\n"${text}"?`)) return;
-    try {
-      const res = await fetch(`/api/admin/announcements/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        loadAllAdminData();
-        if (onRefreshGlobalData) onRefreshGlobalData();
-      } else {
-        alert('Failed to delete announcement');
-      }
-    } catch (err) {
-      alert('Network error while deleting announcement');
-    }
-  };
-
-  const handleToggleAnnouncement = async (id: string) => {
-    try {
-      const res = await fetch(`/api/admin/announcements/${id}/toggle`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        loadAllAdminData();
-        if (onRefreshGlobalData) onRefreshGlobalData();
-      }
-    } catch (err) {
-      alert('Network error');
-    }
-  };
-
-  // --- Events Handlers ---
+  // Events & Announcements Handlers
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventTitle.trim()) return;
-    setSavingEvent(true);
+    if (!eventTitle.trim() || !eventDate.trim() || !eventTime.trim()) {
+      alert("Please provide the event title, date, and time.");
+      return;
+    }
+    setUploadingEvent(true);
+    setEventSuccessMsg('');
     try {
       const formData = new FormData();
       formData.append('title', eventTitle.trim());
-      formData.append('category', eventCategory.trim());
       formData.append('date', eventDate.trim());
       formData.append('time', eventTime.trim());
       formData.append('venue', eventVenue.trim());
+      formData.append('category', eventCategory.trim() || 'Featured Event');
       formData.append('description', eventDesc.trim());
-      formData.append('badge', eventBadge.trim());
-      formData.append('cta', eventCta.trim());
-      formData.append('status', eventStatus);
-      formData.append('attendees', eventAttendees.trim() || 'Campus Community');
+      formData.append('link', eventLink.trim());
+      formData.append('linkText', eventLinkText.trim() || 'RSVP Online');
       if (eventImageFile) {
-        formData.append('image', eventImageFile);
-      } else if (eventImageUrl) {
+        formData.append('eventImage', eventImageFile);
+      } else if (eventImageUrl.trim()) {
         formData.append('imageUrl', eventImageUrl.trim());
       }
 
@@ -575,107 +512,123 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create event');
 
+      setEventSuccessMsg('Event successfully published with cover image & link!');
+      setEventsList(data.events || []);
       setEventTitle('');
       setEventDate('');
       setEventTime('');
-      setEventVenue('IISER Bhopal Campus');
+      setEventVenue('');
+      setEventCategory('Featured Event');
       setEventDesc('');
-      setEventBadge('');
-      setEventAttendees('');
-      setEventImageUrl('');
+      setEventLink('');
+      setEventLinkText('RSVP Online');
       setEventImageFile(null);
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert(`Event "${data.event.title}" created successfully in ${eventStatus === 'past' ? 'Past Events Archive' : 'Upcoming Events'}!`);
+      setEventImageUrl('');
+      setTimeout(() => setEventSuccessMsg(''), 5000);
     } catch (err: any) {
-      alert(err.message);
+      alert('Error creating event: ' + err.message);
     } finally {
-      setSavingEvent(false);
+      setUploadingEvent(false);
     }
   };
 
-  const handleUpdateEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingEvent) return;
+  const handleDeleteEvent = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this event?')) return;
     try {
-      const res = await fetch(`/api/admin/events/${editingEvent.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(editingEvent)
+      const res = await fetch(`/api/admin/events/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to update event');
-      setEditingEvent(null);
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert('Event updated successfully!');
+      if (!res.ok) throw new Error(data.error || 'Failed to delete event');
+      setEventsList(data.events || []);
     } catch (err: any) {
-      alert(err.message);
+      alert('Error deleting event: ' + err.message);
     }
   };
 
-  const handleMarkEventPast = async (e: React.FormEvent) => {
+  const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!markingPastEvent) return;
+    if (!announcementText.trim()) {
+      alert("Please provide the announcement message.");
+      return;
+    }
+    setUploadingAnnouncement(true);
+    setAnnouncementSuccessMsg('');
     try {
-      const res = await fetch(`/api/admin/events/${markingPastEvent.id}/mark-past`, {
+      const res = await fetch('/api/admin/announcements', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          attendees: pastAttendeesInput.trim(),
-          image: pastImageUrlInput.trim() || undefined
+          text: announcementText.trim(),
+          tag: announcementTag.trim() || 'Notice',
+          linkUrl: announcementLinkUrl.trim(),
+          linkText: announcementLinkText.trim(),
+          active: true
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to mark event as past');
-      setMarkingPastEvent(null);
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert(data.message || 'Event marked as past and featured in Past Events Archive!');
+      if (!res.ok) throw new Error(data.error || 'Failed to post announcement');
+
+      setAnnouncementSuccessMsg('Announcement successfully published with active link!');
+      setAnnouncementsList(data.announcements || []);
+      setAnnouncementText('');
+      setAnnouncementTag('Call for Submissions');
+      setAnnouncementLinkUrl('');
+      setAnnouncementLinkText('');
+      setTimeout(() => setAnnouncementSuccessMsg(''), 5000);
     } catch (err: any) {
-      alert(err.message);
+      alert('Error posting announcement: ' + err.message);
+    } finally {
+      setUploadingAnnouncement(false);
     }
   };
 
-  const handleMoveEventUpcoming = async (id: string, title: string) => {
-    if (!confirm(`Move "${title}" back to Upcoming Events?`)) return;
+  const handleDeleteAnnouncement = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this announcement?')) return;
     try {
-      const res = await fetch(`/api/admin/events/${id}/mark-upcoming`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
-      loadAllAdminData();
-      if (onRefreshGlobalData) onRefreshGlobalData();
-      alert(`Event "${title}" moved to Upcoming Events!`);
-    } catch (err: any) {
-      alert(err.message);
-    }
-  };
-
-  const handleDeleteEvent = async (id: string, title: string) => {
-    if (!confirm(`Permanently delete event "${title}"?`)) return;
-    try {
-      const res = await fetch(`/api/admin/events/${id}`, {
+      const res = await fetch(`/api/admin/announcements/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        loadAllAdminData();
-        if (onRefreshGlobalData) onRefreshGlobalData();
-      } else {
-        alert('Failed to delete event');
-      }
-    } catch (err) {
-      alert('Network error while deleting event');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete announcement');
+      setAnnouncementsList(data.announcements || []);
+    } catch (err: any) {
+      alert('Error deleting announcement: ' + err.message);
     }
+  };
+
+  // GitHub Auto-Sync & Backup Handlers
+  const handleSaveGithubToken = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingGithubToken(true);
+    setGithubSyncMsg('');
+    try {
+      const res = await fetch('/api/admin/sync-github', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ token: githubTokenInput.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to sync with GitHub');
+      setGithubSyncMsg('Repository sync successful! data.json is backed up to GitHub.');
+      setTimeout(() => setGithubSyncMsg(''), 5000);
+    } catch (err: any) {
+      alert('GitHub Sync error: ' + err.message);
+    } finally {
+      setSavingGithubToken(false);
+    }
+  };
+
+  const handleDownloadBackup = () => {
+    window.open('/api/admin/backup-data', '_blank');
   };
 
   // Blog Actions
@@ -969,40 +922,6 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
               </button>
 
               <button
-                onClick={() => setActiveTab('events')}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-                  activeTab === 'events'
-                    ? 'bg-uday-crimson text-white shadow-warm'
-                    : 'text-uday-midnight/75 hover:bg-uday-peach/20'
-                }`}
-              >
-                <Calendar className="w-4 h-4" />
-                <span>Events & Milestones</span>
-                {eventsData.upcoming.length > 0 && (
-                  <span className="ml-auto bg-uday-peach/40 text-uday-midnight px-1.5 py-0.5 rounded-full text-[10px] font-black">
-                    {eventsData.upcoming.length}
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab('announcements')}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
-                  activeTab === 'announcements'
-                    ? 'bg-uday-orange text-white shadow-warm'
-                    : 'text-uday-midnight/75 hover:bg-uday-peach/20'
-                }`}
-              >
-                <Bell className="w-4 h-4" />
-                <span>Announcements</span>
-                {announcementsList.filter(a => a.active).length > 0 && (
-                  <span className="ml-auto bg-emerald-500 text-white px-1.5 py-0.5 rounded-full text-[10px] font-black">
-                    {announcementsList.filter(a => a.active).length}
-                  </span>
-                )}
-              </button>
-
-              <button
                 onClick={() => setActiveTab('blogs')}
                 className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
                   activeTab === 'blogs'
@@ -1041,6 +960,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
               >
                 <Users className="w-4 h-4" />
                 <span>Directory & Contacts</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('events')}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold whitespace-nowrap transition-all ${
+                  activeTab === 'events'
+                    ? 'bg-uday-crimson text-white shadow-warm'
+                    : 'text-uday-midnight/75 hover:bg-uday-peach/20'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Events & Notices</span>
+                {(eventsList.length > 0 || announcementsList.length > 0) && (
+                  <span className="ml-auto bg-white/20 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    {eventsList.length + announcementsList.length}
+                  </span>
+                )}
               </button>
 
               <button
@@ -1233,603 +1169,133 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                     <h4 className="font-serif font-bold text-lg text-uday-midnight">Published Magazine Releases ({magazinesList.length})</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {magazinesList.map(mag => (
-                        <div key={mag.id} className="p-4 bg-[#FAF7F2] rounded-2xl border border-uday-peach/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div key={mag.id} className="p-4 bg-[#FAF7F2] rounded-2xl border border-uday-peach/40 flex items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-14 rounded-lg bg-uday-midnight overflow-hidden shrink-0 relative">
+                            <div className="w-12 h-14 rounded-lg bg-uday-midnight overflow-hidden shrink-0">
                               <img src={mag.coverImage || '/uday-logo.jpg'} alt="" className="w-full h-full object-cover" />
-                              {mag.isLatest && (
-                                <span className="absolute top-0 right-0 bg-amber-500 text-white px-1 text-[8px] font-bold rounded-bl" title="Featured on Front Page">
-                                  ★
-                                </span>
-                              )}
                             </div>
                             <div>
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[10px] font-bold text-uday-crimson uppercase">Vol {mag.volumeNumber} • {mag.year}</span>
-                                {mag.isLatest ? (
-                                  <span className="bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded text-[9px] font-black flex items-center gap-0.5">
-                                    <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" /> Featured on Front Page
-                                  </span>
-                                ) : null}
-                              </div>
+                              <span className="text-[10px] font-bold text-uday-crimson uppercase">Vol {mag.volumeNumber} • {mag.year}</span>
                               <h5 className="font-serif font-bold text-sm text-uday-midnight">{mag.title}</h5>
-                              <span className="text-[11px] text-gray-500">{mag.pagesCount || 100} Pages</span>
+                              <span className="text-[11px] text-gray-500">{mag.pagesCount} Pages</span>
                             </div>
                           </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {!mag.isLatest && (
-                              <button
-                                onClick={() => handleFeatureMagazine(mag.id, mag.title)}
-                                className="px-2.5 py-1.5 text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-lg border border-amber-300 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
-                                title="Set this edition as the featured latest release on the front page"
-                              >
-                                <Star className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Feature on Front</span>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setEditingMagazine(mag)}
-                              className="px-2.5 py-1.5 text-uday-midnight bg-white hover:bg-uday-peach/20 rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1 transition-all"
-                              title="Edit Issue Details"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              <span>Edit</span>
-                            </button>
+                          <div className="flex items-center gap-2">
                             {mag.pdfUrl && (
-                              <a href={mag.pdfUrl} target="_blank" rel="noreferrer" className="px-2.5 py-1.5 text-uday-teal hover:text-uday-midnight bg-white rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1.5" title="View PDF">
+                              <a href={mag.pdfUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 text-uday-teal hover:text-uday-midnight bg-white rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1.5" title="View PDF">
                                 <FileText className="w-3.5 h-3.5" />
                                 <span>PDF</span>
                               </a>
                             )}
                             <button
                               onClick={() => handleDeleteMagazine(mag.id)}
-                              className="px-2.5 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                              className="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
                               title="Delete this magazine volume"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
+                              <span>Delete Issue</span>
                             </button>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* TAB: EVENTS & MILESTONES */}
-              {activeTab === 'events' && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="border-b border-uday-peach/30 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <h3 className="font-serif text-2xl font-bold text-uday-midnight">Campus Events & Milestones Management</h3>
-                      <p className="text-xs text-uday-midnight/70">
-                        Create upcoming literary meets, magazine releases, and campus events. Concluded events can be easily marked to the Past Events Archive.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Add Event Form */}
-                  <form onSubmit={handleCreateEvent} className="bg-[#FAF7F2] p-6 rounded-3xl border border-uday-peach/50 space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-uday-peach/30">
-                      <span className="text-xs font-bold text-uday-midnight uppercase tracking-wider flex items-center gap-1.5">
-                        <PlusCircle className="w-4 h-4 text-uday-crimson" /> Add New Event
-                      </span>
-                      {/* Event Status selector */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-uday-midnight/70">Section:</span>
-                        <div className="inline-flex rounded-xl bg-white p-1 border border-uday-peach/40">
-                          <button
-                            type="button"
-                            onClick={() => setEventStatus('upcoming')}
-                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                              eventStatus === 'upcoming'
-                                ? 'bg-uday-crimson text-white shadow-sm'
-                                : 'text-uday-midnight/70 hover:text-uday-midnight'
-                            }`}
-                          >
-                            Upcoming Event
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEventStatus('past')}
-                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                              eventStatus === 'past'
-                                ? 'bg-uday-midnight text-white shadow-sm'
-                                : 'text-uday-midnight/70 hover:text-uday-midnight'
-                            }`}
-                          >
-                            Past Event Archive
-                          </button>
+                  {/* Chief Editor's Note Editor */}
+                  <div className="pt-6 border-t border-uday-peach/40 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-uday-crimson bg-uday-crimson/10 px-3 py-1 rounded-full mb-1">
+                          <Bookmark className="w-3.5 h-3.5" /> Chief Editor's Note Control
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Event Title *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. Uday Annual Literary Fest 2025"
-                          value={eventTitle}
-                          onChange={e => setEventTitle(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Category</label>
-                        <select
-                          value={eventCategory}
-                          onChange={e => setEventCategory(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        >
-                          <option value="Campus Gathering">Campus Gathering</option>
-                          <option value="Literary Festival">Literary Festival</option>
-                          <option value="Open Mic & Poetry">Open Mic & Poetry</option>
-                          <option value="Book Launch">Book Launch</option>
-                          <option value="Writing Workshop">Writing Workshop</option>
-                          <option value="Annual Release">Annual Release</option>
-                          <option value="Science & Art Colloquium">Science & Art Colloquium</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Date *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="e.g. October 24, 2025"
-                          value={eventDate}
-                          onChange={e => setEventDate(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Time</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 5:30 PM - 8:00 PM"
-                          value={eventTime}
-                          onChange={e => setEventTime(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Venue</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. LHC-101 / Community Center"
-                          value={eventVenue}
-                          onChange={e => setEventVenue(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Highlight Badge (Optional)</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Flagship Fest, Annual Edition"
-                          value={eventBadge}
-                          onChange={e => setEventBadge(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">RSVP / CTA Text</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. RSVP Free, Join Us"
-                          value={eventCta}
-                          onChange={e => setEventCta(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Expected / Past Attendees</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. 250+ Students & Faculty"
-                          value={eventAttendees}
-                          onChange={e => setEventAttendees(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Image */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-white rounded-2xl border border-uday-peach/40">
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider flex items-center gap-1">
-                          <Upload className="w-3.5 h-3.5 text-uday-crimson" /> Upload Event Poster / Photo
-                        </label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => setEventImageFile(e.target.files ? e.target.files[0] : null)}
-                          className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-1.5 text-xs text-uday-midnight"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider flex items-center gap-1">
-                          <ExternalLink className="w-3.5 h-3.5 text-uday-crimson" /> Or Image URL (Public / Unsplash)
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://images.unsplash.com/..."
-                          value={eventImageUrl}
-                          onChange={e => setEventImageUrl(e.target.value)}
-                          className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Description & Highlights</label>
-                      <textarea
-                        rows={2}
-                        placeholder="Key themes, guest speakers, guidelines..."
-                        value={eventDesc}
-                        onChange={e => setEventDesc(e.target.value)}
-                        className="w-full bg-white border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={savingEvent}
-                      className="px-6 py-3 bg-gradient-to-r from-uday-crimson to-uday-orange text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-warm hover:opacity-95 transition-all"
-                    >
-                      {savingEvent ? 'Saving Event...' : `Add to ${eventStatus === 'past' ? 'Past Events Archive' : 'Upcoming Events'}`}
-                    </button>
-                  </form>
-
-                  {/* Section 1: Upcoming Events */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-serif font-bold text-lg text-uday-midnight flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Upcoming Events ({eventsData.upcoming.length})
-                      </h4>
-                      <span className="text-xs text-uday-midnight/60">Visible on public Events page & Front page</span>
-                    </div>
-
-                    {eventsData.upcoming.length === 0 ? (
-                      <div className="p-8 text-center bg-[#FAF7F2] rounded-2xl border border-dashed border-uday-peach/60 text-xs text-uday-midnight/70">
-                        No upcoming events scheduled right now. Use the form above to add an upcoming campus event!
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {eventsData.upcoming.map(ev => (
-                          <div key={ev.id} className="p-4 bg-[#FAF7F2] rounded-2xl border border-uday-peach/40 flex flex-col justify-between gap-3">
-                            <div className="flex gap-3">
-                              <div className="w-16 h-16 rounded-xl bg-uday-midnight overflow-hidden shrink-0">
-                                <img src={ev.image || '/uday-logo.jpg'} alt="" className="w-full h-full object-cover" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="text-[10px] font-bold text-uday-crimson uppercase">{ev.category}</span>
-                                  {ev.badge && (
-                                    <span className="bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded text-[9px] font-black">
-                                      {ev.badge}
-                                    </span>
-                                  )}
-                                </div>
-                                <h5 className="font-serif font-bold text-sm text-uday-midnight truncate">{ev.title}</h5>
-                                <div className="text-[11px] text-gray-600 flex items-center gap-2 mt-0.5">
-                                  <span>📅 {ev.date}</span>
-                                  {ev.time && <span>⏰ {ev.time}</span>}
-                                </div>
-                                <div className="text-[11px] text-gray-500 truncate mt-0.5">
-                                  📍 {ev.venue}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-uday-peach/30">
-                              <button
-                                onClick={() => {
-                                  setMarkingPastEvent(ev);
-                                  setPastAttendeesInput(ev.attendees || '350+ Students & Faculty');
-                                  setPastImageUrlInput(ev.image || '');
-                                }}
-                                className="px-3 py-1.5 text-uday-midnight bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-                                title="Move this event into the Past Events Archive"
-                              >
-                                <Check className="w-3.5 h-3.5 text-amber-800" />
-                                <span>Mark as Past Event</span>
-                              </button>
-
-                              <div className="flex items-center gap-1.5 ml-auto">
-                                <button
-                                  onClick={() => setEditingEvent(ev)}
-                                  className="px-2.5 py-1.5 text-uday-midnight bg-white hover:bg-uday-peach/20 rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1"
-                                  title="Edit Event Details"
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteEvent(ev.id, ev.title)}
-                                  className="px-2.5 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
-                                  title="Delete Event"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                  <span>Delete</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section 2: Past Events Archive */}
-                  <div className="space-y-3 pt-4 border-t border-uday-peach/30">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-serif font-bold text-lg text-uday-midnight flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-uday-crimson" />
-                          Past Events Archive ({eventsData.past.length})
-                        </h4>
-                        <p className="text-xs text-uday-midnight/65">
-                          Featured in the Past Events section on the website with turnout stats and photo recaps.
+                        <h4 className="font-serif font-bold text-xl text-uday-midnight">Edit Chief Editor's Letter / Note</h4>
+                        <p className="text-xs text-uday-midnight/70">
+                          Customize the Editor's Note featured directly on the public Magazine page for each issue.
                         </p>
                       </div>
                     </div>
 
-                    {eventsData.past.length === 0 ? (
-                      <div className="p-8 text-center bg-[#FAF7F2] rounded-2xl border border-dashed border-uday-peach/60 text-xs text-uday-midnight/70">
-                        No past events archived yet. Conclude an upcoming event using "Mark as Past Event" or add one directly above!
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {eventsData.past.map(ev => (
-                          <div key={ev.id} className="p-4 bg-white rounded-2xl border border-uday-peach/50 flex flex-col justify-between gap-3 shadow-sm">
-                            <div className="flex gap-3">
-                              <div className="w-16 h-16 rounded-xl bg-uday-midnight overflow-hidden shrink-0">
-                                <img src={ev.image || '/uday-logo.jpg'} alt="" className="w-full h-full object-cover" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="bg-gray-100 text-gray-700 px-1.5 py-0.2 rounded text-[9px] font-bold uppercase">
-                                    Concluded
-                                  </span>
-                                  <span className="text-[10px] font-bold text-uday-crimson uppercase">{ev.category}</span>
-                                </div>
-                                <h5 className="font-serif font-bold text-sm text-uday-midnight truncate">{ev.title}</h5>
-                                <div className="text-[11px] text-gray-600 flex items-center gap-2 mt-0.5">
-                                  <span>📅 {ev.date}</span>
-                                  <span className="text-emerald-700 font-medium">👥 {ev.attendees || 'Campus Community'}</span>
-                                </div>
-                                <div className="text-[11px] text-gray-500 truncate mt-0.5">
-                                  📍 {ev.venue}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-                              <button
-                                onClick={() => handleMoveEventUpcoming(ev.id, ev.title)}
-                                className="px-2.5 py-1 text-uday-teal bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-lg text-xs font-bold flex items-center gap-1 transition-all"
-                                title="Move this event back to Upcoming Events"
-                              >
-                                <ArrowRight className="w-3 h-3" />
-                                <span>Move to Upcoming</span>
-                              </button>
-
-                              <div className="flex items-center gap-1.5 ml-auto">
-                                <button
-                                  onClick={() => setEditingEvent(ev)}
-                                  className="px-2.5 py-1.5 text-uday-midnight bg-[#FAF7F2] hover:bg-uday-peach/20 rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1"
-                                  title="Edit Past Event"
-                                >
-                                  <Edit3 className="w-3 h-3" />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteEvent(ev.id, ev.title)}
-                                  className="px-2.5 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
-                                  title="Delete Event"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                  <span>Delete</span>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    {editorNoteMsg && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{editorNoteMsg}</span>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
 
-              {/* TAB: ANNOUNCEMENTS */}
-              {activeTab === 'announcements' && (
-                <div className="space-y-8 animate-fadeIn">
-                  <div className="border-b border-uday-peach/30 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <h3 className="font-serif text-2xl font-bold text-uday-midnight">Broadcast Announcements & Editorial Alerts</h3>
-                      <p className="text-xs text-uday-midnight/70">
-                        Broadcast calls for submission, magazine releases, and urgent alerts. Edit any notice, toggle live broadcasting, or delete past announcements.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Add Announcement Form */}
-                  <form onSubmit={handleCreateAnnouncement} className="bg-[#FAF7F2] p-6 rounded-3xl border border-uday-peach/50 space-y-4">
-                    <div className="flex items-center gap-2 pb-2 border-b border-uday-peach/30">
-                      <PlusCircle className="w-4 h-4 text-uday-orange" />
-                      <span className="text-xs font-bold text-uday-midnight uppercase tracking-wider">Create New Announcement</span>
-                    </div>
-
-                    <div className="space-y-3">
+                    <form onSubmit={handleSaveEditorNote} className="space-y-4 bg-[#FAF7F2] p-5 sm:p-6 rounded-2xl border border-uday-peach/50">
                       <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Announcement Text *</label>
-                        <textarea
-                          rows={2}
-                          required
-                          placeholder="e.g. Submissions open for Uday Volume 12: Ethereal Horizons. Submit your essays and poems before Nov 30!"
-                          value={newAnnText}
-                          onChange={e => setNewAnnText(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                        />
+                        <label className="block text-xs font-bold text-uday-midnight mb-1">Select Magazine Volume to Update *</label>
+                        <select
+                          value={selectedMagIdForNote}
+                          onChange={e => handleSelectMagazineForNote(e.target.value)}
+                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-medium"
+                        >
+                          {magazinesList.map(m => (
+                            <option key={m.id} value={m.id}>
+                              Vol. {m.volumeNumber} - {m.title} ({m.year}) {m.isLatest ? '★ Current Featured' : ''}
+                            </option>
+                          ))}
+                        </select>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Category Tag</label>
-                          <select
-                            value={newAnnTag}
-                            onChange={e => setNewAnnTag(e.target.value)}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-1">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Note Heading / Title</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. A Confluence of Melodies & Thought"
+                            value={editorNoteTitle}
+                            onChange={e => setEditorNoteTitle(e.target.value)}
                             className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                          >
-                            <option value="SUBMISSIONS">SUBMISSIONS</option>
-                            <option value="OFFICIAL">OFFICIAL</option>
-                            <option value="ALERT">ALERT</option>
-                            <option value="LAUNCH">LAUNCH</option>
-                            <option value="UPDATE">UPDATE</option>
-                            <option value="COMMUNITY">COMMUNITY</option>
-                          </select>
+                          />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Destination Link (Optional)</label>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Author Name</label>
                           <input
                             type="text"
-                            placeholder="e.g. /submit-blog or /magazines or https://..."
-                            value={newAnnLink}
-                            onChange={e => setNewAnnLink(e.target.value)}
+                            required
+                            placeholder="e.g. Dr. Pranay Goel / Editorial Board"
+                            value={editorNoteAuthor}
+                            onChange={e => setEditorNoteAuthor(e.target.value)}
+                            className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Designation / Role</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Faculty Advisor & Editorial Board"
+                            value={editorNoteRole}
+                            onChange={e => setEditorNoteRole(e.target.value)}
                             className="w-full bg-white border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
                           />
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <input
-                          type="checkbox"
-                          id="newAnnActiveCheckbox"
-                          checked={newAnnActive}
-                          onChange={e => setNewAnnActive(e.target.checked)}
-                          className="rounded border-uday-peach/60 text-uday-crimson focus:ring-uday-crimson w-4 h-4 cursor-pointer"
+                      <div>
+                        <label className="block text-xs font-bold text-uday-midnight mb-1">Editor's Note Message / Body Text</label>
+                        <textarea
+                          rows={6}
+                          required
+                          placeholder="Write or paste the complete Chief Editor's Note..."
+                          value={editorNoteText}
+                          onChange={e => setEditorNoteText(e.target.value)}
+                          className="w-full bg-white border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson leading-relaxed"
                         />
-                        <label htmlFor="newAnnActiveCheckbox" className="text-xs font-bold text-uday-midnight cursor-pointer select-none">
-                          Broadcast immediately on website (Live ticker & feed)
-                        </label>
                       </div>
-                    </div>
 
-                    <button
-                      type="submit"
-                      disabled={savingAnnouncement}
-                      className="px-6 py-3 bg-gradient-to-r from-uday-orange to-uday-crimson text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-warm hover:opacity-95 transition-all"
-                    >
-                      {savingAnnouncement ? 'Broadcasting...' : 'Publish Announcement'}
-                    </button>
-                  </form>
-
-                  {/* Announcements List */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-serif font-bold text-lg text-uday-midnight flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-uday-orange" />
-                        All Announcements ({announcementsList.length})
-                      </h4>
-                      <span className="text-xs text-uday-midnight/60">
-                        {announcementsList.filter(a => a.active).length} Active broadcasts
-                      </span>
-                    </div>
-
-                    {announcementsList.length === 0 ? (
-                      <div className="p-8 text-center bg-[#FAF7F2] rounded-2xl border border-dashed border-uday-peach/60 text-xs text-uday-midnight/70">
-                        No announcements broadcast yet. Use the form above to post one!
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {announcementsList.map(ann => (
-                          <div
-                            key={ann.id}
-                            className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                              ann.active
-                                ? 'bg-white border-uday-peach/60 shadow-sm'
-                                : 'bg-gray-50 border-gray-200 opacity-75'
-                            }`}
-                          >
-                            <div className="flex-1 space-y-1.5">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span
-                                  className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                    ann.active
-                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                      : 'bg-gray-200 text-gray-600'
-                                  }`}
-                                >
-                                  {ann.active ? '● Live Broadcast' : '○ Hidden / Inactive'}
-                                </span>
-                                <span className="bg-uday-crimson/10 text-uday-crimson px-2 py-0.5 rounded-md text-[10px] font-bold">
-                                  [{ann.tag}]
-                                </span>
-                                {ann.link && (
-                                  <a
-                                    href={ann.link}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-[11px] text-uday-teal hover:underline flex items-center gap-0.5"
-                                  >
-                                    <ExternalLink className="w-3 h-3" />
-                                    <span>{ann.link}</span>
-                                  </a>
-                                )}
-                              </div>
-                              <p className="text-xs text-uday-midnight font-medium leading-relaxed">
-                                {ann.text}
-                              </p>
-                              <div className="text-[10px] text-gray-400">
-                                Posted: {new Date(ann.createdAt).toLocaleDateString()}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <button
-                                onClick={() => handleToggleAnnouncement(ann.id)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                                  ann.active
-                                    ? 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
-                                    : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                }`}
-                                title={ann.active ? 'Hide from live broadcast' : 'Make live on website'}
-                              >
-                                {ann.active ? 'Hide' : 'Make Live'}
-                              </button>
-                              <button
-                                onClick={() => setEditingAnnouncement(ann)}
-                                className="px-2.5 py-1.5 text-uday-midnight bg-white hover:bg-uday-peach/20 rounded-lg border border-gray-200 text-xs font-bold flex items-center gap-1"
-                                title="Edit Announcement"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                                <span>Edit</span>
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAnnouncement(ann.id, ann.text)}
-                                className="px-2.5 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1 transition-all shadow-sm"
-                                title="Delete Announcement"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Delete</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                      <button
+                        type="submit"
+                        disabled={savingEditorNote}
+                        className="px-6 py-2.5 bg-gradient-to-r from-uday-crimson to-uday-orange text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-warm hover:opacity-95 transition-all flex items-center gap-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>{savingEditorNote ? 'Saving Editor’s Note...' : 'Save & Publish Chief Editor’s Note'}</span>
+                      </button>
+                    </form>
                   </div>
                 </div>
               )}
@@ -2561,7 +2027,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
 
                         <div>
                           <label className="block text-xs font-bold text-uday-midnight mb-1">
-                            Reporters & Feature Writers
+                            Reporting Team
                           </label>
                           <p className="text-[10px] text-uday-midnight/60 mb-1.5">One name per line</p>
                           <textarea
@@ -2575,11 +2041,25 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
 
                         <div>
                           <label className="block text-xs font-bold text-uday-midnight mb-1">
-                            Designers & Illustrators
+                            PR & Social Media Team
                           </label>
                           <p className="text-[10px] text-uday-midnight/60 mb-1.5">One name per line</p>
                           <textarea
-                            rows={5}
+                            rows={6}
+                            value={prText}
+                            onChange={e => setPrText(e.target.value)}
+                            placeholder="Ananya Verma&#10;Karan Mehta"
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson leading-relaxed"
+                          ></textarea>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            Design Team & Illustrators
+                          </label>
+                          <p className="text-[10px] text-uday-midnight/60 mb-1.5">One name per line</p>
+                          <textarea
+                            rows={6}
                             value={designersText}
                             onChange={e => setDesignersText(e.target.value)}
                             placeholder="Neeshma K P&#10;Abhishek Thakur"
@@ -2587,13 +2067,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                           ></textarea>
                         </div>
 
-                        <div className="sm:col-span-2">
+                        <div>
                           <label className="block text-xs font-bold text-uday-midnight mb-1">
-                            Student Advisors & Senior Mentors
+                            Student Advisory Team
                           </label>
                           <p className="text-[10px] text-uday-midnight/60 mb-1.5">One name per line</p>
                           <textarea
-                            rows={5}
+                            rows={6}
                             value={advisorsText}
                             onChange={e => setAdvisorsText(e.target.value)}
                             placeholder="Hitaishi Desai&#10;Md Ishaque Khan"
@@ -2619,6 +2099,353 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                     </div>
 
                   </form>
+                </div>
+              )}
+
+              {/* TAB: EVENTS & ANNOUNCEMENTS MANAGEMENT */}
+              {activeTab === 'events' && (
+                <div className="space-y-10 animate-fadeIn">
+                  {/* Tab Header */}
+                  <div className="border-b border-uday-peach/30 pb-4">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-uday-crimson bg-uday-crimson/10 px-3 py-1 rounded-full mb-1">
+                      <Calendar className="w-3.5 h-3.5" /> Events & Announcements Control
+                    </div>
+                    <h3 className="font-serif text-2xl font-bold text-uday-midnight">Publish Events & Campus Announcements</h3>
+                    <p className="text-xs text-uday-midnight/70">
+                      Upload upcoming literary events with banners & RSVP links, and broadcast instant notices across the homepage and events section.
+                    </p>
+                  </div>
+
+                  {/* SECTION 1: CREATE NEW EVENT */}
+                  <div className="bg-white rounded-2xl border border-uday-peach/60 p-6 shadow-sm space-y-5">
+                    <div className="flex items-center justify-between border-b border-uday-peach/30 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-uday-crimson/10 text-uday-crimson flex items-center justify-center font-bold">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-serif text-lg font-bold text-uday-midnight">Publish New Upcoming Event</h4>
+                          <p className="text-xs text-uday-midnight/60">Includes event banner image and registration / RSVP links.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {eventSuccessMsg && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{eventSuccessMsg}</span>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleCreateEvent} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Event Title *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Annual Literary Festival: Kavya Sandhya 2024"
+                            value={eventTitle}
+                            onChange={e => setEventTitle(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Event Category</label>
+                          <select
+                            value={eventCategory}
+                            onChange={e => setEventCategory(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-medium"
+                          >
+                            <option value="Featured Event">Featured Event</option>
+                            <option value="Workshop">Workshop</option>
+                            <option value="Literary Talk">Literary Talk</option>
+                            <option value="Exhibition">Exhibition</option>
+                            <option value="Reading Session">Reading Session</option>
+                            <option value="Poetry Slam">Poetry Slam</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Date String *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. OCT 28, 2024"
+                            value={eventDate}
+                            onChange={e => setEventDate(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Time & Duration *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. 5:30 PM - 7:30 PM"
+                            value={eventTime}
+                            onChange={e => setEventTime(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Venue / Location</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. L-4 Lecture Hall Complex"
+                            value={eventVenue}
+                            onChange={e => setEventVenue(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">External Registration / RSVP Link (URL)</label>
+                          <input
+                            type="url"
+                            placeholder="https://forms.google.com/... or event page link"
+                            value={eventLink}
+                            onChange={e => setEventLink(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Link Button Label</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. RSVP Online or Register Now"
+                            value={eventLinkText}
+                            onChange={e => setEventLinkText(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Event Cover Image (Upload or Web URL)</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={e => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    setEventImageFile(e.target.files[0]);
+                                  }
+                                }}
+                                className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-uday-crimson/10 file:text-uday-crimson hover:file:bg-uday-crimson/20"
+                              />
+                            </div>
+                            <div>
+                              <input
+                                type="url"
+                                placeholder="Or paste image URL (https://...)"
+                                value={eventImageUrl}
+                                onChange={e => setEventImageUrl(e.target.value)}
+                                className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Event Description</label>
+                          <textarea
+                            rows={3}
+                            placeholder="A concise summary of what this event entails, guest speakers, themes, etc."
+                            value={eventDesc}
+                            onChange={e => setEventDesc(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson leading-relaxed"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={uploadingEvent}
+                        className="px-6 py-3 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm flex items-center gap-2 transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>{uploadingEvent ? 'Publishing Event...' : 'Publish Event to Website'}</span>
+                      </button>
+                    </form>
+
+                    {/* Existing Events List */}
+                    <div className="pt-6 border-t border-uday-peach/40 space-y-4">
+                      <h4 className="font-serif font-bold text-base text-uday-midnight">Currently Scheduled Events ({eventsList.length})</h4>
+                      {eventsList.length === 0 ? (
+                        <p className="text-xs text-uday-midnight/60 italic">No events currently scheduled.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {eventsList.map(ev => (
+                            <div key={ev.id} className="p-4 bg-[#FAF7F2] rounded-2xl border border-uday-peach/50 flex flex-col justify-between gap-3">
+                              <div className="space-y-2">
+                                {ev.image && (
+                                  <div className="w-full h-32 rounded-xl overflow-hidden bg-uday-midnight/5 border border-uday-peach/40">
+                                    <img src={ev.image} alt={ev.title} className="w-full h-full object-cover" />
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-uday-crimson uppercase tracking-wider bg-uday-crimson/10 px-2 py-0.5 rounded">
+                                    {ev.category || 'Event'}
+                                  </span>
+                                  <span className="text-xs font-semibold text-uday-midnight/70">{ev.date}</span>
+                                </div>
+                                <h5 className="font-serif font-bold text-sm text-uday-midnight">{ev.title}</h5>
+                                <p className="text-xs text-uday-midnight/70 line-clamp-2">{ev.description}</p>
+                                {ev.link && (
+                                  <div className="text-xs text-uday-teal font-semibold flex items-center gap-1">
+                                    <ExternalLink className="w-3 h-3" />
+                                    <span className="truncate">{ev.linkText || 'Link'}: {ev.link}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="pt-2 border-t border-uday-peach/30 flex items-center justify-between">
+                                <span className="text-[11px] text-gray-500">{ev.time} • {ev.venue}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteEvent(ev.id)}
+                                  className="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                                  title="Delete Event"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: ANNOUNCEMENTS MANAGEMENT */}
+                  <div className="bg-white rounded-2xl border border-uday-peach/60 p-6 shadow-sm space-y-5">
+                    <div className="flex items-center justify-between border-b border-uday-peach/30 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-uday-teal/10 text-uday-teal flex items-center justify-center font-bold">
+                          <Bell className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h4 className="font-serif text-lg font-bold text-uday-midnight">Broadcast Campus Announcements</h4>
+                          <p className="text-xs text-uday-midnight/60">Displays active announcements with clickable links on public pages.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {announcementSuccessMsg && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{announcementSuccessMsg}</span>
+                      </div>
+                    )}
+
+                    <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Tag / Category</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Call for Submissions or Urgent Notice"
+                            value={announcementTag}
+                            onChange={e => setAnnouncementTag(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Action Link URL (Optional)</label>
+                          <input
+                            type="url"
+                            placeholder="https://... (e.g. submission form or doc)"
+                            value={announcementLinkUrl}
+                            onChange={e => setAnnouncementLinkUrl(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Link Button Label</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Submit Here or Read Notice"
+                            value={announcementLinkText}
+                            onChange={e => setAnnouncementLinkText(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">Announcement Message *</label>
+                          <textarea
+                            rows={3}
+                            required
+                            placeholder="Enter the announcement message to display on the website..."
+                            value={announcementText}
+                            onChange={e => setAnnouncementText(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson leading-relaxed"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={uploadingAnnouncement}
+                        className="px-6 py-3 bg-gradient-to-r from-uday-teal to-uday-midnight text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm flex items-center gap-2 transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>{uploadingAnnouncement ? 'Posting Announcement...' : 'Post Announcement Banner'}</span>
+                      </button>
+                    </form>
+
+                    {/* Existing Announcements List */}
+                    <div className="pt-6 border-t border-uday-peach/40 space-y-3">
+                      <h4 className="font-serif font-bold text-base text-uday-midnight">Live Announcements ({announcementsList.length})</h4>
+                      {announcementsList.length === 0 ? (
+                        <p className="text-xs text-uday-midnight/60 italic">No active announcements.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {announcementsList.map(an => (
+                            <div key={an.id} className="p-4 bg-[#FAF7F2] rounded-2xl border border-uday-peach/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold text-uday-teal uppercase tracking-wider bg-uday-teal/10 px-2 py-0.5 rounded">
+                                    {an.tag || 'Notice'}
+                                  </span>
+                                  {an.active && (
+                                    <span className="text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded font-bold">
+                                      Active
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-uday-midnight font-medium">{an.text}</p>
+                                {an.linkUrl && (
+                                  <a href={an.linkUrl} target="_blank" rel="noreferrer" className="text-xs text-uday-crimson font-bold hover:underline inline-flex items-center gap-1">
+                                    <span>{an.linkText || 'Open Link'}</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAnnouncement(an.id)}
+                                className="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-600 hover:text-white rounded-lg border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-all self-start sm:self-center shrink-0 shadow-sm"
+                                title="Delete Announcement"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -2841,472 +2668,75 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                       </button>
                     </form>
                   )}
+
+                  {/* DATA PERSISTENCE & GITHUB AUTO-SYNC CARD */}
+                  <div className="bg-[#FAF7F2] p-6 rounded-2xl border border-uday-peach/50 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-uday-crimson/10 text-uday-crimson flex items-center justify-center font-bold shrink-0">
+                        <Download className="w-5 h-5 text-uday-crimson" />
+                      </div>
+                      <div>
+                        <h4 className="font-serif font-bold text-base text-uday-midnight">Cloud Persistence & Database Backup</h4>
+                        <p className="text-xs text-uday-midnight/70">
+                          Prevent Render free-tier data loss when the web service spins down or restarts.
+                        </p>
+                      </div>
+                    </div>
+
+                    {githubSyncMsg && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{githubSyncMsg}</span>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-uday-midnight/70 space-y-2">
+                      <p>
+                        On Render's free tier, the file system resets when the server goes to sleep after 15 minutes of inactivity. To ensure your magazine uploads, events, announcements, and directory changes <strong>persist permanently</strong>:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Option A: GitHub Auto-Sync:</strong> Enter your GitHub Personal Access Token (repo scope). Any change will automatically be committed to your repository's <code>server/data.json</code> file.</li>
+                        <li><strong>Option B: 1-Click Backup:</strong> Download your live <code>data.json</code> directly to your computer at any time.</li>
+                      </ul>
+                    </div>
+
+                    {/* GitHub Sync Form */}
+                    <form onSubmit={handleSaveGithubToken} className="space-y-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-bold text-uday-midnight mb-1">GitHub Personal Access Token (PAT)</label>
+                        <input
+                          type="password"
+                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                          value={githubTokenInput}
+                          onChange={e => setGithubTokenInput(e.target.value)}
+                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="submit"
+                          disabled={savingGithubToken}
+                          className="px-5 py-2.5 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${savingGithubToken ? 'animate-spin' : ''}`} />
+                          <span>{savingGithubToken ? 'Saving & Syncing...' : 'Save Token & Sync to GitHub'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleDownloadBackup}
+                          className="px-5 py-2.5 bg-white border border-uday-peach/70 hover:bg-uday-cream text-uday-midnight rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                        >
+                          <Download className="w-3.5 h-3.5 text-uday-crimson" />
+                          <span>Download data.json Backup</span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               )}
 
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: EDIT MAGAZINE */}
-      {editingMagazine && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-uday-peach/60 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between pb-3 border-b border-uday-peach/30">
-              <div>
-                <h3 className="font-serif text-xl font-bold text-uday-midnight">Edit Magazine Release</h3>
-                <p className="text-xs text-uday-midnight/60">Update edition metadata, PDF links, and cover artwork</p>
-              </div>
-              <button
-                onClick={() => setEditingMagazine(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-xl"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateMagazine} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Volume Number *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingMagazine.volumeNumber || ''}
-                    onChange={e => setEditingMagazine({ ...editingMagazine, volumeNumber: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Release Year *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editingMagazine.year || ''}
-                    onChange={e => setEditingMagazine({ ...editingMagazine, year: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Pages Count</label>
-                  <input
-                    type="number"
-                    value={editingMagazine.pagesCount || ''}
-                    onChange={e => setEditingMagazine({ ...editingMagazine, pagesCount: parseInt(e.target.value) || 0 })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Issue Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={editingMagazine.title || ''}
-                  onChange={e => setEditingMagazine({ ...editingMagazine, title: e.target.value })}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Theme / Concept</label>
-                  <input
-                    type="text"
-                    value={editingMagazine.theme || ''}
-                    onChange={e => setEditingMagazine({ ...editingMagazine, theme: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Editor-in-Chief</label>
-                  <input
-                    type="text"
-                    value={editingMagazine.editorInChief || ''}
-                    onChange={e => setEditingMagazine({ ...editingMagazine, editorInChief: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">PDF File / Google Drive URL</label>
-                <input
-                  type="url"
-                  value={editingMagazine.pdfUrl || ''}
-                  onChange={e => setEditingMagazine({ ...editingMagazine, pdfUrl: e.target.value })}
-                  placeholder="https://drive.google.com/file/d/... or /uploads/..."
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Cover Artwork URL</label>
-                <input
-                  type="url"
-                  value={editingMagazine.coverImage || ''}
-                  onChange={e => setEditingMagazine({ ...editingMagazine, coverImage: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Description / Overview</label>
-                <textarea
-                  rows={3}
-                  value={editingMagazine.description || ''}
-                  onChange={e => setEditingMagazine({ ...editingMagazine, description: e.target.value })}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-uday-peach/30">
-                <button
-                  type="button"
-                  onClick={() => setEditingMagazine(null)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingEditMag}
-                  className="px-5 py-2.5 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm"
-                >
-                  {savingEditMag ? 'Saving Changes...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: EDIT EVENT */}
-      {editingEvent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-uday-peach/60 shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between pb-3 border-b border-uday-peach/30">
-              <div>
-                <h3 className="font-serif text-xl font-bold text-uday-midnight">Edit Event</h3>
-                <p className="text-xs text-uday-midnight/60">Update details or move between Upcoming and Past archives</p>
-              </div>
-              <button
-                onClick={() => setEditingEvent(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-xl"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateEvent} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Event Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingEvent.title || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, title: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Section / Status</label>
-                  <select
-                    value={editingEvent.status || 'upcoming'}
-                    onChange={e => setEditingEvent({ ...editingEvent, status: e.target.value as 'upcoming' | 'past' })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs font-bold text-uday-crimson focus:outline-none focus:border-uday-crimson"
-                  >
-                    <option value="upcoming">Upcoming Event</option>
-                    <option value="past">Past Event Archive</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Category</label>
-                  <input
-                    type="text"
-                    value={editingEvent.category || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, category: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Date *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingEvent.date || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, date: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Time</label>
-                  <input
-                    type="text"
-                    value={editingEvent.time || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, time: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Venue</label>
-                  <input
-                    type="text"
-                    value={editingEvent.venue || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, venue: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Highlight Badge</label>
-                  <input
-                    type="text"
-                    value={editingEvent.badge || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, badge: e.target.value })}
-                    placeholder="e.g. Flagship Fest"
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">CTA Text</label>
-                  <input
-                    type="text"
-                    value={editingEvent.cta || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, cta: e.target.value })}
-                    placeholder="e.g. RSVP Free"
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Turnout / Attendees</label>
-                  <input
-                    type="text"
-                    value={editingEvent.attendees || ''}
-                    onChange={e => setEditingEvent({ ...editingEvent, attendees: e.target.value })}
-                    placeholder="e.g. 350+ Turnout"
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Image URL</label>
-                <input
-                  type="url"
-                  value={editingEvent.image || ''}
-                  onChange={e => setEditingEvent({ ...editingEvent, image: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Description</label>
-                <textarea
-                  rows={3}
-                  value={editingEvent.description || ''}
-                  onChange={e => setEditingEvent({ ...editingEvent, description: e.target.value })}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-uday-peach/30">
-                <button
-                  type="button"
-                  onClick={() => setEditingEvent(null)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: MARK EVENT AS PAST */}
-      {markingPastEvent && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-uday-peach/60 shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between pb-3 border-b border-uday-peach/30">
-              <div>
-                <h3 className="font-serif text-xl font-bold text-uday-midnight">Feature in Past Events Archive</h3>
-                <p className="text-xs text-uday-midnight/60">Conclude this event and showcase it on the website</p>
-              </div>
-              <button
-                onClick={() => setMarkingPastEvent(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-xl"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200">
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Event to Archive:</span>
-              <h4 className="font-serif font-bold text-sm text-uday-midnight">{markingPastEvent.title}</h4>
-              <p className="text-xs text-gray-600">📅 {markingPastEvent.date} • 📍 {markingPastEvent.venue}</p>
-            </div>
-
-            <form onSubmit={handleMarkEventPast} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">
-                  Turnout / Attendees Milestone *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 400+ Students & Faculty Attended"
-                  value={pastAttendeesInput}
-                  onChange={e => setPastAttendeesInput(e.target.value)}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-                <span className="text-[10px] text-gray-500 mt-1 block">
-                  Displayed on the public card as the attendance milestone.
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">
-                  Event Photo / Recap Image URL (Optional)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={pastImageUrlInput}
-                  onChange={e => setPastImageUrlInput(e.target.value)}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-                <span className="text-[10px] text-gray-500 mt-1 block">
-                  Leave blank to retain original image or fallback logo.
-                </span>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-uday-peach/30">
-                <button
-                  type="button"
-                  onClick={() => setMarkingPastEvent(null)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm"
-                >
-                  Confirm & Feature in Past Events
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: EDIT ANNOUNCEMENT */}
-      {editingAnnouncement && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-uday-peach/60 shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between pb-3 border-b border-uday-peach/30">
-              <div>
-                <h3 className="font-serif text-xl font-bold text-uday-midnight">Edit Announcement</h3>
-                <p className="text-xs text-uday-midnight/60">Update announcement text or broadcast status</p>
-              </div>
-              <button
-                onClick={() => setEditingAnnouncement(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-700 rounded-xl"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateAnnouncement} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Announcement Text *</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={editingAnnouncement.text || ''}
-                  onChange={e => setEditingAnnouncement({ ...editingAnnouncement, text: e.target.value })}
-                  className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl p-3 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Category Tag</label>
-                  <select
-                    value={editingAnnouncement.tag || 'SUBMISSIONS'}
-                    onChange={e => setEditingAnnouncement({ ...editingAnnouncement, tag: e.target.value })}
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  >
-                    <option value="SUBMISSIONS">SUBMISSIONS</option>
-                    <option value="OFFICIAL">OFFICIAL</option>
-                    <option value="ALERT">ALERT</option>
-                    <option value="LAUNCH">LAUNCH</option>
-                    <option value="UPDATE">UPDATE</option>
-                    <option value="COMMUNITY">COMMUNITY</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-uday-midnight mb-1 uppercase tracking-wider">Destination Link</label>
-                  <input
-                    type="text"
-                    value={editingAnnouncement.link || ''}
-                    onChange={e => setEditingAnnouncement({ ...editingAnnouncement, link: e.target.value })}
-                    placeholder="/submit-blog or https://..."
-                    className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="editAnnActiveCheckbox"
-                  checked={Boolean(editingAnnouncement.active)}
-                  onChange={e => setEditingAnnouncement({ ...editingAnnouncement, active: e.target.checked })}
-                  className="rounded border-uday-peach/60 text-uday-crimson focus:ring-uday-crimson w-4 h-4 cursor-pointer"
-                />
-                <label htmlFor="editAnnActiveCheckbox" className="text-xs font-bold text-uday-midnight cursor-pointer select-none">
-                  Active broadcast (Live on home ticker and announcements feed)
-                </label>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-uday-peach/30">
-                <button
-                  type="button"
-                  onClick={() => setEditingAnnouncement(null)}
-                  className="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

@@ -167,6 +167,11 @@ function getDefaultTeamAndContact() {
       "P S Rishi",
       "Aditya Pratap Singh"
     ],
+    prTeam: [
+      "Geethanjli R",
+      "Subhashree Mohanty",
+      "Aryan Joshi"
+    ],
     designers: [
       "Neeshma K P",
       "Abhishek Thakur"
@@ -196,10 +201,69 @@ function readData() {
   }
 }
 
+// GitHub Auto-Sync: Commits data.json to GitHub repository so changes persist across Render restarts
+async function syncDataToGitHub(data) {
+  const token = process.env.GITHUB_TOKEN || data.settings?.githubToken;
+  const repo = process.env.GITHUB_REPO || 'sayandeep24-ar/uday-magazine';
+  const branch = process.env.GITHUB_BRANCH || 'main';
+  const filePath = 'server/data.json';
+
+  if (!token) return { success: false, reason: 'no_token' };
+
+  try {
+    const fileUrl = `https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`;
+    const getRes = await fetch(fileUrl, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'uday-magazine-portal'
+      }
+    });
+
+    let sha = undefined;
+    if (getRes.ok) {
+      const fileData = await getRes.json();
+      sha = fileData.sha;
+    }
+
+    const contentBase64 = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
+    const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'uday-magazine-portal'
+      },
+      body: JSON.stringify({
+        message: 'sync: auto-commit data.json from admin dashboard [skip ci]',
+        content: contentBase64,
+        sha,
+        branch
+      })
+    });
+
+    if (putRes.ok) {
+      console.log('✓ Successfully synced and committed data.json to GitHub repository.');
+      return { success: true };
+    } else {
+      const errJson = await putRes.json().catch(() => ({}));
+      console.warn('GitHub auto-sync notice:', errJson.message || putRes.statusText);
+      return { success: false, reason: errJson.message || putRes.statusText };
+    }
+  } catch (err) {
+    console.error('GitHub auto-sync error:', err.message);
+    return { success: false, reason: err.message };
+  }
+}
+
 // Helper to write data safely
-function writeData(data) {
+function writeData(data, skipSync = false) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    if (!skipSync) {
+      syncDataToGitHub(data).catch(() => {});
+    }
     return true;
   } catch (err) {
     console.error('Error writing data.json:', err);
@@ -1006,7 +1070,7 @@ app.get('/api/admin/settings', requireAdmin, (req, res) => {
 });
 
 app.post('/api/admin/settings', requireAdmin, (req, res) => {
-  const { googleSheetsWebhookUrl, driveFolderEmbedUrl } = req.body;
+  const { googleSheetsWebhookUrl, driveFolderEmbedUrl, githubToken } = req.body;
   const data = readData();
   if (!data.settings) data.settings = {};
 
@@ -1015,6 +1079,9 @@ app.post('/api/admin/settings', requireAdmin, (req, res) => {
   }
   if (typeof driveFolderEmbedUrl === 'string') {
     data.settings.driveFolderEmbedUrl = driveFolderEmbedUrl.trim();
+  }
+  if (typeof githubToken === 'string') {
+    data.settings.githubToken = githubToken.trim();
   }
   writeData(data);
   res.json({ success: true, settings: data.settings });
@@ -1052,7 +1119,7 @@ app.post('/api/admin/team', requireAdmin, (req, res) => {
 });
 
 // ==========================================
-// 8. ADMIN MANAGEMENT: ANNOUNCEMENTS & EVENTS
+// 8. ADMIN MANAGEMENT: ANNOUNCEMENTS, EVENTS, EDITOR NOTE & PERSISTENCE
 // ==========================================
 
 // --- Announcements Admin Endpoints ---
@@ -1065,29 +1132,33 @@ app.get('/api/admin/announcements', requireAdmin, (req, res) => {
 
 // Add a new announcement
 app.post('/api/admin/announcements', requireAdmin, (req, res) => {
-  const { text, tag, active, link } = req.body;
+  const { id, text, tag, active, link, linkUrl, linkText } = req.body;
   if (!text || !text.trim()) {
     return res.status(400).json({ error: 'Announcement text is required' });
   }
   const data = readData();
   if (!data.announcements) data.announcements = [];
+  const effectiveLink = (linkUrl || link || '').trim();
+  const effectiveLinkText = (linkText || 'Details').trim();
   const newAnnouncement = {
-    id: `ann-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
+    id: id || `ann-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`,
     text: text.trim(),
-    tag: (tag || 'UPDATE').trim().toUpperCase(),
+    tag: (tag || 'NOTICE').trim().toUpperCase(),
     active: active !== undefined ? Boolean(active) : true,
-    link: link ? link.trim() : undefined,
+    link: effectiveLink || undefined,
+    linkUrl: effectiveLink || undefined,
+    linkText: effectiveLinkText,
     createdAt: new Date().toISOString()
   };
   data.announcements.unshift(newAnnouncement);
   writeData(data);
-  res.status(201).json({ success: true, announcement: newAnnouncement });
+  res.status(201).json({ success: true, announcement: newAnnouncement, announcements: data.announcements });
 });
 
 // Edit an announcement
 app.put('/api/admin/announcements/:id', requireAdmin, (req, res) => {
   const { id } = req.params;
-  const { text, tag, active, link } = req.body;
+  const { text, tag, active, link, linkUrl, linkText } = req.body;
   const data = readData();
   if (!data.announcements) data.announcements = [];
   const ann = data.announcements.find(a => a.id === id);
@@ -1097,10 +1168,15 @@ app.put('/api/admin/announcements/:id', requireAdmin, (req, res) => {
   if (text !== undefined) ann.text = text.trim();
   if (tag !== undefined) ann.tag = tag.trim().toUpperCase();
   if (active !== undefined) ann.active = Boolean(active);
-  if (link !== undefined) ann.link = link.trim();
+  const effectiveLink = linkUrl !== undefined ? linkUrl : link;
+  if (effectiveLink !== undefined) {
+    ann.link = effectiveLink ? effectiveLink.trim() : '';
+    ann.linkUrl = effectiveLink ? effectiveLink.trim() : '';
+  }
+  if (linkText !== undefined) ann.linkText = linkText.trim();
   ann.updatedAt = new Date().toISOString();
   writeData(data);
-  res.json({ success: true, announcement: ann });
+  res.json({ success: true, announcement: ann, announcements: data.announcements });
 });
 
 // Delete an announcement
@@ -1114,7 +1190,7 @@ app.delete('/api/admin/announcements/:id', requireAdmin, (req, res) => {
     return res.status(404).json({ error: 'Announcement not found' });
   }
   writeData(data);
-  res.json({ success: true, message: 'Announcement deleted successfully' });
+  res.json({ success: true, message: 'Announcement deleted successfully', announcements: data.announcements });
 });
 
 // Toggle announcement active status
@@ -1128,16 +1204,16 @@ app.post('/api/admin/announcements/:id/toggle', requireAdmin, (req, res) => {
   }
   ann.active = !ann.active;
   writeData(data);
-  res.json({ success: true, active: ann.active, announcement: ann });
+  res.json({ success: true, active: ann.active, announcement: ann, announcements: data.announcements });
 });
 
 // --- Events Admin Endpoints ---
 
-// Create a new Event (Upcoming or Past)
+// Create or update an Event (Upcoming or Past)
 app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) => {
   const {
-    title, category, date, time, venue, description, badge, cta,
-    status, attendees, imageUrl
+    id, title, category, date, time, venue, description, badge, cta,
+    status, attendees, link, linkText, imageUrl, type
   } = req.body;
   if (!title || !title.trim()) {
     return res.status(400).json({ error: 'Event title is required' });
@@ -1155,34 +1231,76 @@ app.post('/api/admin/events', requireAdmin, upload.single('image'), (req, res) =
     finalImage = 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
   }
 
-  const isPast = status === 'past';
-  const eventId = isPast 
-    ? `pev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
-    : `ev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
+  const isPast = status === 'past' || type === 'past';
+  const targetCategory = isPast ? 'past' : 'upcoming';
 
-  const eventObj = {
-    id: eventId,
-    title: title.trim(),
-    category: (category || 'Campus Event').trim(),
-    date: (date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })).trim(),
-    time: time ? time.trim() : '',
-    venue: (venue || 'IISER Bhopal Campus').trim(),
-    description: (description || '').trim(),
-    badge: badge ? badge.trim() : undefined,
-    cta: cta ? cta.trim() : 'RSVP Free',
-    image: finalImage,
-    attendees: attendees ? attendees.trim() : 'Campus Community',
-    createdAt: new Date().toISOString()
-  };
+  if (id) {
+    let found = false;
+    ['upcoming', 'past'].forEach(listKey => {
+      const idx = data.events[listKey].findIndex(e => e.id === id);
+      if (idx !== -1) {
+        found = true;
+        const current = data.events[listKey][idx];
+        const updated = {
+          ...current,
+          title: title.trim(),
+          category: (category || current.category || 'Featured Event').trim(),
+          date: (date || current.date).trim(),
+          time: time ? time.trim() : (current.time || ''),
+          venue: (venue || current.venue || 'IISER Bhopal Campus').trim(),
+          description: (description !== undefined ? description : current.description || '').trim(),
+          badge: badge !== undefined ? badge.trim() : current.badge,
+          cta: cta ? cta.trim() : (current.cta || 'RSVP Online'),
+          image: finalImage || current.image,
+          attendees: attendees ? attendees.trim() : current.attendees,
+          link: link !== undefined ? link.trim() : (current.link || ''),
+          linkText: linkText ? linkText.trim() : (current.linkText || 'RSVP Online'),
+          updatedAt: new Date().toISOString()
+        };
 
-  if (isPast) {
-    data.events.past.unshift(eventObj);
+        if (listKey === targetCategory) {
+          data.events[listKey][idx] = updated;
+        } else {
+          data.events[listKey].splice(idx, 1);
+          data.events[targetCategory].unshift(updated);
+        }
+      }
+    });
+
+    if (!found) {
+      return res.status(404).json({ error: 'Event not found.' });
+    }
   } else {
-    data.events.upcoming.unshift(eventObj);
+    const eventId = isPast 
+      ? `pev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
+      : `ev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
+
+    const eventObj = {
+      id: eventId,
+      title: title.trim(),
+      category: (category || 'Featured Event').trim(),
+      date: (date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })).trim(),
+      time: time ? time.trim() : '',
+      venue: (venue || 'IISER Bhopal Campus').trim(),
+      description: (description || '').trim(),
+      badge: badge ? badge.trim() : undefined,
+      cta: cta ? cta.trim() : 'RSVP Online',
+      image: finalImage,
+      attendees: attendees ? attendees.trim() : 'Campus Community',
+      link: link ? link.trim() : '',
+      linkText: linkText ? linkText.trim() : 'RSVP Online',
+      createdAt: new Date().toISOString()
+    };
+
+    if (isPast) {
+      data.events.past.unshift(eventObj);
+    } else {
+      data.events.upcoming.unshift(eventObj);
+    }
   }
 
   writeData(data);
-  res.status(201).json({ success: true, event: eventObj, status: isPast ? 'past' : 'upcoming' });
+  res.status(201).json({ success: true, events: data.events });
 });
 
 // Edit an existing Event
@@ -1190,7 +1308,7 @@ app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res
   const { id } = req.params;
   const {
     title, category, date, time, venue, description, badge, cta,
-    status, attendees, imageUrl
+    status, attendees, link, linkText, imageUrl
   } = req.body;
   const data = readData();
   if (!data.events) data.events = { upcoming: [], past: [] };
@@ -1225,6 +1343,8 @@ app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res
   if (badge !== undefined) existingEvent.badge = badge.trim();
   if (cta !== undefined) existingEvent.cta = cta.trim();
   if (attendees !== undefined) existingEvent.attendees = attendees.trim();
+  if (link !== undefined) existingEvent.link = link.trim();
+  if (linkText !== undefined) existingEvent.linkText = linkText.trim();
   if (imageUrl) existingEvent.image = imageUrl.trim();
   if (req.file) {
     existingEvent.image = `/uploads/${req.file.filename}`;
@@ -1250,7 +1370,7 @@ app.put('/api/admin/events/:id', requireAdmin, upload.single('image'), (req, res
   }
 
   writeData(data);
-  res.json({ success: true, event: existingEvent, status: targetStatus });
+  res.json({ success: true, event: existingEvent, status: targetStatus, events: data.events });
 });
 
 // Mark an upcoming event as past to feature it in the past events section
@@ -1278,7 +1398,8 @@ app.post('/api/admin/events/:id/mark-past', requireAdmin, (req, res) => {
   res.json({
     success: true,
     message: `Event "${event.title}" marked as past and now featured in Past Events Archive!`,
-    event
+    event,
+    events: data.events
   });
 });
 
@@ -1301,7 +1422,8 @@ app.post('/api/admin/events/:id/mark-upcoming', requireAdmin, (req, res) => {
   res.json({
     success: true,
     message: `Event "${event.title}" moved to Upcoming Events!`,
-    event
+    event,
+    events: data.events
   });
 });
 
@@ -1331,7 +1453,60 @@ app.delete('/api/admin/events/:id', requireAdmin, (req, res) => {
   }
 
   writeData(data);
-  res.json({ success: true, message: 'Event successfully deleted' });
+  res.json({ success: true, message: 'Event successfully deleted', events: data.events });
+});
+
+// Update Magazine Editor's Note
+app.post('/api/admin/magazines/:id/editor-note', requireAdmin, (req, res) => {
+  const { id } = req.params;
+  const { title, author, role, text } = req.body;
+  const data = readData();
+
+  if (!data.magazines) data.magazines = [];
+  const mag = data.magazines.find(m => m.id === id);
+  if (!mag) {
+    return res.status(404).json({ error: 'Magazine edition not found.' });
+  }
+
+  mag.editorNote = {
+    title: (title || "Letter from the Editor").trim(),
+    author: (author || mag.editorInChief || "Chief Editor").trim(),
+    role: (role || `Chief Editor, Uday ${mag.year}`).trim(),
+    text: (text || '').trim()
+  };
+
+  writeData(data);
+  res.json({ success: true, editorNote: mag.editorNote, magazines: data.magazines });
+});
+
+// 1-Click Backup Download of data.json
+app.get('/api/admin/backup-data', requireAdmin, (req, res) => {
+  const data = readData();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="uday-magazine-backup-${Date.now()}.json"`);
+  res.send(JSON.stringify(data, null, 2));
+});
+
+// Trigger or Test GitHub Auto-Sync
+app.post('/api/admin/sync-github', requireAdmin, async (req, res) => {
+  const { token: bodyToken, githubToken } = req.body;
+  const passedToken = bodyToken || githubToken;
+  const data = readData();
+
+  if (typeof passedToken === 'string' && passedToken.trim()) {
+    if (!data.settings) data.settings = {};
+    data.settings.githubToken = passedToken.trim();
+    writeData(data, true);
+  }
+
+  const syncResult = await syncDataToGitHub(data);
+  res.json({
+    success: syncResult.success,
+    message: syncResult.success
+      ? 'Successfully pushed and synced data.json to GitHub repository!'
+      : `GitHub sync response: ${syncResult.reason}`,
+    syncResult
+  });
 });
 
 // ==========================================

@@ -23,6 +23,12 @@ export interface Volume {
   downloadUrl: string;
   isLatest: boolean;
   pagesCount: number;
+  editorNote?: {
+    title: string;
+    author: string;
+    role: string;
+    text: string;
+  };
 }
 
 export const PAST_VOLUMES: Volume[] = [
@@ -450,6 +456,7 @@ export interface TeamAndContact {
   editorialEnglish: string[];
   editorialHindi: string[];
   reporters: string[];
+  prTeam?: string[];
   designers: string[];
   studentAdvisors: string[];
   lastUpdated?: string;
@@ -524,6 +531,7 @@ export const EDITORIAL_BOARD: TeamAndContact = {
   editorialEnglish: ["Siddhant Patra", "Kaustubh Nyati", "Kshitij Dalal", "Kritika Pahilajani", "Sneha Shree", "Akshat Pandey", "Sreejit Bakshi"],
   editorialHindi: ["Himanshu Mishra", "Kshitij Dalal", "Vaishnavi Tripathi", "Ishita Borthakur", "Aadarsh"],
   reporters: ["Chirag Sharma", "Samba Siva Reddy", "Ilesha Ojha", "P S Rishi", "Aditya Pratap Singh"],
+  prTeam: ["Geethanjli R", "Subhashree Mohanty", "Aryan Joshi"],
   designers: ["Neeshma K P", "Abhishek Thakur"],
   studentAdvisors: ["Hitaishi Desai", "Md Ishaque Khan"]
 };

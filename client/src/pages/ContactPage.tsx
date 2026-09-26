@@ -130,53 +130,118 @@ export const ContactPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Editorial Sub-Teams */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-5 rounded-2xl border border-uday-peach/40 space-y-2">
-          <h4 className="font-serif font-bold text-sm text-uday-midnight border-b border-uday-peach/30 pb-2">
-            Editorial Team (English)
-          </h4>
-          <ul className="text-xs text-uday-midnight/75 space-y-1">
+      {/* Editorial Sub-Teams & Contributors - 6 Distinct Pillars */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              Editorial Team (English)
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-uday-crimson bg-uday-crimson/10 px-2 py-0.5 rounded">
+              English
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
             {team.editorialEnglish.map((name, i) => (
-              <li key={i}>• {name}</li>
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-uday-crimson shrink-0" />
+                <span>{name}</span>
+              </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-uday-peach/40 space-y-2">
-          <h4 className="font-serif font-bold text-sm text-uday-midnight border-b border-uday-peach/30 pb-2">
-            Editorial Team (Hindi)
-          </h4>
-          <ul className="text-xs text-uday-midnight/75 space-y-1">
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              Editorial Team (Hindi)
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-uday-orange bg-uday-orange/10 px-2 py-0.5 rounded">
+              Hindi
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
             {team.editorialHindi.map((name, i) => (
-              <li key={i}>• {name}</li>
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-uday-orange shrink-0" />
+                <span>{name}</span>
+              </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-uday-peach/40 space-y-2">
-          <h4 className="font-serif font-bold text-sm text-uday-midnight border-b border-uday-peach/30 pb-2">
-            Reporters & Writers
-          </h4>
-          <ul className="text-xs text-uday-midnight/75 space-y-1">
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              Reporting Team
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-uday-teal bg-uday-teal/10 px-2 py-0.5 rounded">
+              Reports
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
             {team.reporters.map((name, i) => (
-              <li key={i}>• {name}</li>
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-uday-teal shrink-0" />
+                <span>{name}</span>
+              </li>
             ))}
           </ul>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-uday-peach/40 space-y-2">
-          <h4 className="font-serif font-bold text-sm text-uday-midnight border-b border-uday-peach/30 pb-2">
-            Design & Advisory
-          </h4>
-          <ul className="text-xs text-uday-midnight/75 space-y-1">
-            <li className="font-semibold text-uday-teal">Designers:</li>
-            {team.designers.map((name, i) => (
-              <li key={i} className="pl-2">• {name}</li>
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              PR & Social Media Team
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-uday-flame bg-uday-flame/10 px-2 py-0.5 rounded">
+              Outreach
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
+            {(team.prTeam || ["Geethanjli R", "Subhashree Mohanty", "Aryan Joshi"]).map((name, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-uday-flame shrink-0" />
+                <span>{name}</span>
+              </li>
             ))}
-            <li className="font-semibold text-uday-teal pt-1">Student Advisors:</li>
+          </ul>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              Design Team
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-uday-forest bg-uday-forest/10 px-2 py-0.5 rounded">
+              Visual Art
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
+            {team.designers.map((name, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-uday-forest shrink-0" />
+                <span>{name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-uday-peach/40 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-uday-peach/30 pb-2">
+            <h4 className="font-serif font-bold text-base text-uday-midnight">
+              Student Advisory Team
+            </h4>
+            <span className="text-[10px] uppercase font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">
+              Mentors
+            </span>
+          </div>
+          <ul className="text-xs text-uday-midnight/80 space-y-1.5">
             {team.studentAdvisors.map((name, i) => (
-              <li key={i} className="pl-2">• {name}</li>
+              <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
+                <span>{name}</span>
+              </li>
             ))}
           </ul>
         </div>

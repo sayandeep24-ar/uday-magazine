@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Users, Sparkles, ChevronRight, Bell, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Sparkles, ChevronRight, Bell, CheckCircle2, ExternalLink, Megaphone } from 'lucide-react';
 
 interface EventItem {
   id: string;
@@ -11,6 +11,9 @@ interface EventItem {
   description: string;
   badge?: string;
   cta?: string;
+  image?: string;
+  link?: string;
+  linkText?: string;
 }
 
 interface PastEventItem {
@@ -23,14 +26,24 @@ interface PastEventItem {
   attendees: string;
 }
 
+interface AnnouncementItem {
+  id: string;
+  text: string;
+  tag?: string;
+  active?: boolean;
+  linkUrl?: string;
+  linkText?: string;
+}
+
 interface EventsSectionProps {
   events: {
     upcoming: EventItem[];
     past: PastEventItem[];
   };
+  announcements?: AnnouncementItem[];
 }
 
-export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ events }) => {
+export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ events, announcements }) => {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
   const [rsvpState, setRsvpState] = useState<Record<string, boolean>>({});
 
@@ -40,6 +53,8 @@ export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ ev
       alert("RSVP Confirmed! You will receive a calendar invite and reminders for this session.");
     }, 100);
   };
+
+  const activeAnnouncements = (announcements || []).filter(a => a.active !== false);
 
   return (
     <section id="events" className="py-20 bg-white border-t border-uday-peach/20">
@@ -86,26 +101,91 @@ export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ ev
           </div>
         </div>
 
-        {/* Tab 1: Upcoming Announcements */}
+        {/* Active Announcements Banner with Direct Action Links */}
+        {activeAnnouncements.length > 0 && (
+          <div className="mb-12 bg-gradient-to-r from-uday-midnight via-[#1c2937] to-uday-midnight text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-uday-peach/20">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-uday-peach mb-5">
+              <Megaphone className="w-4 h-4 text-uday-flame" />
+              <span>Official Campus Announcements & Notices</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {activeAnnouncements.map(ann => (
+                <div
+                  key={ann.id}
+                  className="bg-white/10 hover:bg-white/15 transition-all rounded-2xl p-5 border border-white/10 flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-2">
+                    <span className="inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-uday-crimson text-white">
+                      {ann.tag || 'NOTICE'}
+                    </span>
+                    <p className="text-xs sm:text-sm text-white/95 leading-relaxed font-medium">
+                      {ann.text}
+                    </p>
+                  </div>
+                  {ann.linkUrl && (
+                    <div className="pt-2 border-t border-white/10">
+                      <a
+                        href={ann.linkUrl}
+                        target={ann.linkUrl.startsWith('http') ? '_blank' : '_self'}
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-uday-peach hover:text-white transition-colors"
+                      >
+                        <span>{ann.linkText || 'Details & RSVP'}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 1: Upcoming Announcements & Events */}
         {activeTab === 'upcoming' && (
           <div className="space-y-6 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {(events.upcoming || []).map(event => (
                 <div
                   key={event.id}
-                  className="bg-[#FAF7F2] rounded-3xl border border-uday-peach/60 p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                  className="bg-[#FAF7F2] rounded-3xl border border-uday-peach/60 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider bg-uday-orange/15 text-uday-orange px-2.5 py-1 rounded-lg">
-                        {event.category}
-                      </span>
+                  {/* Event Cover Image Banner */}
+                  {event.image && (
+                    <div className="h-44 w-full overflow-hidden relative bg-uday-midnight">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                      />
                       {event.badge && (
-                        <span className="text-[10px] font-bold bg-uday-crimson text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                          {event.badge}
-                        </span>
+                        <div className="absolute top-3 right-3">
+                          <span className="text-[10px] font-bold bg-uday-crimson/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full uppercase tracking-wider shadow">
+                            {event.badge}
+                          </span>
+                        </div>
                       )}
                     </div>
+                  )}
+
+                  <div className="p-6 sm:p-7 space-y-4 flex-1">
+                    {!event.image && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider bg-uday-orange/15 text-uday-orange px-2.5 py-1 rounded-lg">
+                          {event.category}
+                        </span>
+                        {event.badge && (
+                          <span className="text-[10px] font-bold bg-uday-crimson text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                            {event.badge}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {event.image && (
+                      <span className="text-[11px] font-bold uppercase tracking-wider bg-uday-orange/15 text-uday-orange px-2.5 py-1 rounded-lg inline-block">
+                        {event.category}
+                      </span>
+                    )}
 
                     <h3 className="font-serif text-xl font-bold text-uday-midnight leading-snug">
                       {event.title}
@@ -133,7 +213,20 @@ export const EventsAndAnnouncementsSection: React.FC<EventsSectionProps> = ({ ev
                     </p>
                   </div>
 
-                  <div className="pt-6 mt-6 border-t border-uday-peach/40">
+                  <div className="p-6 pt-0 sm:p-7 sm:pt-0 space-y-2.5 border-t border-uday-peach/40 mt-auto">
+                    {/* Event External Link Button */}
+                    {event.link && (
+                      <a
+                        href={event.link}
+                        target={event.link.startsWith('http') ? '_blank' : '_self'}
+                        rel="noreferrer"
+                        className="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-uday-teal text-uday-teal hover:bg-uday-teal hover:text-white transition-all shadow-sm"
+                      >
+                        <span>{event.linkText || 'Open Event Link'}</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+
                     <button
                       onClick={() => handleRsvp(event.id)}
                       disabled={rsvpState[event.id]}

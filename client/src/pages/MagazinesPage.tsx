@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Download, Eye, Sparkles, Music, Bookmark, ChevronRight, FileText, Lock, Trash2, ShieldAlert } from 'lucide-react';
+import { BookOpen, Download, Eye, Sparkles, Music, Bookmark, ChevronRight, FileText, Lock, Trash2, ShieldAlert, Maximize2, X, ExternalLink } from 'lucide-react';
 import { FEATURED_ARTICLES, SECTION_DETAILS, EDITOR_LETTER, Article } from '../data/publicationData';
 
 interface MagazineEdition {
@@ -16,6 +16,12 @@ interface MagazineEdition {
   releaseDate?: string;
   description?: string;
   isLatest?: boolean;
+  editorNote?: {
+    title: string;
+    author: string;
+    role: string;
+    text: string;
+  };
 }
 
 interface MagazinesPageProps {
@@ -27,6 +33,8 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<string>('All');
   const [showEditorLetter, setShowEditorLetter] = useState<boolean>(false);
+  const [activeReaderMag, setActiveReaderMag] = useState<MagazineEdition | null>(null);
+  const [showReader, setShowReader] = useState<boolean>(false);
   const adminToken = localStorage.getItem('uday_admin_token');
 
   const loadMagazines = () => {
@@ -76,6 +84,7 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
     : FEATURED_ARTICLES.filter(a => a.section === activeSection);
 
   const latestMagazine = magazines.find(m => m.isLatest) || magazines[0];
+  const activeEditorNote = latestMagazine?.editorNote || EDITOR_LETTER;
 
   return (
     <div className="pt-28 pb-20 space-y-16">
@@ -174,6 +183,22 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
                     </button>
                   )}
 
+                  {latestMagazine.pdfUrl && latestMagazine.pdfUrl !== '#' && (
+                    <button
+                      onClick={() => {
+                        setActiveReaderMag(latestMagazine);
+                        setShowReader(true);
+                        setTimeout(() => {
+                          document.getElementById('online-flipbook-reader')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      }}
+                      className="px-6 py-3 rounded-xl bg-uday-midnight hover:bg-uday-teal text-white font-bold text-xs uppercase tracking-wider shadow-warm transition-all flex items-center gap-2"
+                    >
+                      <BookOpen className="w-4 h-4 text-uday-peach" />
+                      <span>{showReader && activeReaderMag?.id === latestMagazine.id ? 'Viewing Online Flipbook' : 'Read Online / Flipbook'}</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setShowEditorLetter(!showEditorLetter)}
                     className="px-5 py-3 rounded-xl border-2 border-uday-teal text-uday-teal hover:bg-uday-teal hover:text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2"
@@ -201,21 +226,84 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
             {/* Expandable Editor's Letter */}
             {showEditorLetter && (
               <div className="mt-8 pt-8 border-t border-uday-peach/40 bg-white/90 p-6 sm:p-8 rounded-2xl animate-fadeIn">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div className="flex items-center gap-2 text-uday-crimson font-serif font-bold text-lg">
                     <Bookmark className="w-5 h-5" />
-                    <h4>{EDITOR_LETTER.title}</h4>
+                    <h4>{activeEditorNote.title}</h4>
                   </div>
                   <div className="text-xs text-uday-teal font-semibold">
-                    By {EDITOR_LETTER.author} ({EDITOR_LETTER.role})
+                    By {activeEditorNote.author} {activeEditorNote.role ? `(${activeEditorNote.role})` : ''}
                   </div>
                 </div>
                 <div className="text-sm text-uday-midnight/80 font-serif whitespace-pre-line leading-relaxed border-l-2 border-uday-crimson pl-4">
-                  {EDITOR_LETTER.text}
+                  {activeEditorNote.text}
                 </div>
               </div>
             )}
 
+          </div>
+        </section>
+      )}
+
+      {/* Online Flipbook / Digital Reader Workspace */}
+      {showReader && activeReaderMag && (
+        <section id="online-flipbook-reader" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-fadeIn scroll-mt-28">
+          <div className="bg-neutral-900 rounded-3xl border-2 border-uday-crimson/50 shadow-2xl p-4 sm:p-6 text-white space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-3 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-xl bg-uday-crimson/20 text-uday-crimson flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5 text-uday-peach" />
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-uday-peach">Online Flipbook / Reading Space</span>
+                  <h3 className="font-serif font-black text-lg sm:text-xl">Volume {activeReaderMag.volumeNumber}: {activeReaderMag.title}</h3>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {activeReaderMag.pdfUrl && activeReaderMag.pdfUrl !== '#' && (
+                  <a
+                    href={activeReaderMag.pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                    title="Open in new full tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Fullscreen / Tab
+                  </a>
+                )}
+                {activeReaderMag.pdfUrl && activeReaderMag.pdfUrl !== '#' && (
+                  <a
+                    href={activeReaderMag.pdfUrl}
+                    download={`Uday-Volume-${activeReaderMag.volumeNumber}.pdf`}
+                    className="px-3.5 py-2 rounded-xl bg-uday-crimson hover:bg-uday-orange text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download PDF
+                  </a>
+                )}
+                <button
+                  onClick={() => setShowReader(false)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-all"
+                  title="Close Reader"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Embedded Flipbook / Reader Frame */}
+            <div className="relative w-full h-[650px] sm:h-[820px] rounded-2xl overflow-hidden bg-black border border-white/10">
+              <iframe
+                src={`${activeReaderMag.pdfUrl}#toolbar=1&navpanes=0&view=FitH`}
+                title={`UDAY Magazine - ${activeReaderMag.title}`}
+                className="w-full h-full border-0"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-white/60 pt-2 gap-2">
+              <span>📖 Flip pages, zoom, and switch reading modes right within the viewer above, or download for offline reading.</span>
+              <span>{activeReaderMag.pagesCount} Pages • Official Institute Archive</span>
+            </div>
           </div>
         </section>
       )}
@@ -345,15 +433,30 @@ export const MagazinesPage: React.FC<MagazinesPageProps> = ({ onReadArticle }) =
                 
                 <div className="flex items-center gap-2">
                   {vol.pdfUrl && vol.pdfUrl !== '#' ? (
-                    <a
-                      href={vol.pdfUrl}
-                      download={`Uday-Volume-${vol.volumeNumber}.pdf`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1 text-xs font-bold text-uday-crimson hover:text-uday-midnight transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" /> PDF
-                    </a>
+                    <>
+                      <button
+                        onClick={() => {
+                          setActiveReaderMag(vol);
+                          setShowReader(true);
+                          setTimeout(() => {
+                            document.getElementById('online-flipbook-reader')?.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }}
+                        className="flex items-center gap-1 text-xs font-bold text-uday-teal hover:text-uday-midnight transition-colors"
+                        title="Read Online"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" /> Read
+                      </button>
+                      <a
+                        href={vol.pdfUrl}
+                        download={`Uday-Volume-${vol.volumeNumber}.pdf`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-xs font-bold text-uday-crimson hover:text-uday-midnight transition-colors"
+                      >
+                        <Download className="w-3.5 h-3.5" /> PDF
+                      </a>
+                    </>
                   ) : (
                     <span className="text-xs text-gray-400">Print</span>
                   )}

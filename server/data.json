@@ -14,19 +14,25 @@
       "id": "ann-1",
       "text": "📢 Call for Submissions for Uday Volume 12 is now OPEN! Send your poems, articles, photo-essays, and artwork.",
       "tag": "SUBMISSIONS",
-      "active": true
+      "active": true,
+      "linkUrl": "/contact",
+      "linkText": "Submit Pitch"
     },
     {
       "id": "ann-2",
       "text": "✨ Volume 11: 'The Ascent' official magazine edition is available to read & download!",
       "tag": "NEW RELEASE",
-      "active": true
+      "active": true,
+      "linkUrl": "/magazines",
+      "linkText": "Read Edition"
     },
     {
       "id": "ann-3",
       "text": "🎙️ Open Mic & Chai Evening this Friday at 6:30 PM at the LHC Amphitheatre.",
       "tag": "EVENT",
-      "active": true
+      "active": true,
+      "linkUrl": "/events",
+      "linkText": "View Event"
     }
   ],
   "magazines": [
@@ -42,7 +48,13 @@
       "pagesCount": 84,
       "releaseDate": "April 2024",
       "description": "Constructed around the motif of the changing seasons and Indian Classical Ragas. Features original investigative journalism, multilingual poetry (English, Hindi, Marathi, Bengali), campus photography, and student fine art.",
-      "isLatest": true
+      "isLatest": true,
+      "editorNote": {
+        "title": "Letter from the Editor",
+        "author": "Aayush Anand",
+        "role": "Chief Editor, Uday 2024",
+        "text": "The journey was long, but we now finally arrive at the destination. Coursing its way through the different aspects of the magazine, the team put in prodigious amounts of efforts to bring to you this edition of Uday. I feel felicitous to being the Chief Editor of this beautiful edition that could harbour and reflect the creativity of the community members.\n\nThis edition indeed took more time than what was expected but I'm glad that the result turned out to be quite laudable. The final phase of the magazine proved the toughest, but here we still stand. I am sure all the efforts the people involved with this edition have put in, will get to the audience it deserves and shall make an impact. Magna est veritas et praevalebit. I would also like to express my gratitude towards Dr. Renny Thomas for his continued assistance and support throughout the process.\n\nThe theme of this year's edition was chosen as the changing seasons. This is quite evident with our cover page, thanks to Abhishek, for designing it. Having situated in the heart of the country, our campus experiences the best of all the seasons and we see how beautifully the canvas of the landscape transitions throughout the year, from colourful and fragrant flowers in spring and early summer to lush green trees in the monsoons to dry and gloomy in the winters. We have tried our best to bring this concept into paper through this edition. As you can see from the title page itself, stands a painting by Edward John Poynter from 1894 depicting the Horae or the goddesses of the seasons in ancient Greek mythology who depicted the natural portions of time. We have also named the sections based on the Ragas from our Indian Classical Music based on their prevalence and time of the year they are sung in.\n\nStamus contra malum.\nNow, move on and go read some real stuff!"
+      }
     }
   ],
   "blogs": [
@@ -146,7 +158,10 @@
         "venue": "Online Portal / Email Submission",
         "description": "Submit articles, poetry in any language, investigative reports, photographic essays, and cover art proposals for the upcoming annual print edition.",
         "badge": "Deadline",
-        "cta": "Submit Entry"
+        "cta": "Submit Entry",
+        "image": "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80",
+        "link": "/contact",
+        "linkText": "Submission Guidelines & Pitch"
       },
       {
         "id": "ev-2",
@@ -157,7 +172,10 @@
         "venue": "Lecture Hall Complex Amphitheatre",
         "description": "An intimate evening of original student poetry, acoustic music, and hot chai under the monsoon stars. Open to all campus residents.",
         "badge": "Campus Event",
-        "cta": "RSVP Free"
+        "cta": "RSVP Free",
+        "image": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80",
+        "link": "https://forms.google.com",
+        "linkText": "Performer Sign-Up Form"
       },
       {
         "id": "ev-3",
@@ -168,7 +186,10 @@
         "venue": "Senate Hall, Administration Block",
         "description": "Led by renowned science communicators and faculty mentors. Learn how to transform complex research papers into gripping narratives.",
         "badge": "Masterclass",
-        "cta": "Register Seat"
+        "cta": "Register Seat",
+        "image": "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&auto=format&fit=crop&q=80",
+        "link": "https://forms.google.com",
+        "linkText": "Workshop Seat Booking"
       }
     ],
     "past": [
@@ -373,6 +394,11 @@
       "P S Rishi",
       "Aditya Pratap Singh"
     ],
+    "prTeam": [
+      "Geethanjli R",
+      "Subhashree Mohanty",
+      "Aryan Joshi"
+    ],
     "designers": [
       "Neeshma K P",
       "Abhishek Thakur"
@@ -381,6 +407,6 @@
       "Hitaishi Desai",
       "Md Ishaque Khan"
     ],
-    "lastUpdated": "2026-09-12T17:16:46.162Z"
+    "lastUpdated": "2026-09-26T11:38:00.000Z"
   }
 }

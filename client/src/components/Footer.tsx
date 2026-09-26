@@ -1,15 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Lock, Feather, BookOpen, Heart, ArrowUp, Sparkles, Image, Calendar, MessageSquare } from 'lucide-react';
+import { TeamAndContact, EDITORIAL_BOARD } from '../data/publicationData';
 
 interface FooterProps {
   onOpenSubmit: () => void;
+  team?: TeamAndContact;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onOpenSubmit }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenSubmit, team }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const currentTeam = team || EDITORIAL_BOARD;
+  const officialEmail = currentTeam.contactDetails?.officialEmail || "udaymagz@iiserb.ac.in";
+  const webLeadName = currentTeam.portalWebLead?.name || "Souradip";
+  const webLeadEmail = currentTeam.portalWebLead?.email || "sayandeep.biswas04@gmail.com";
+  const webLeadRole = currentTeam.portalWebLead?.role || "Portal & Web Lead";
+  const advisorName = currentTeam.facultyAdvisor?.name || "Dr. Renny Thomas";
+  const advisorDept = currentTeam.facultyAdvisor?.department || "Dept. of HSS";
+  const copyright = currentTeam.contactDetails?.copyrightNotice || "Designed & Developed by Souradip & Sayandeep. © 2024 UDAY Magazine. IISER Bhopal. All rights reserved.";
 
   return (
     <footer className="bg-uday-midnight text-white border-t-4 border-uday-crimson pt-16 pb-12 mt-auto">
@@ -86,34 +97,30 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSubmit }) => {
             <div className="space-y-2 text-xs text-white/75">
               <div>
                 <span className="text-white/50 block text-[10px] uppercase">Official Email</span>
-                <a href="mailto:udaymagz@iiserb.ac.in" className="text-uday-peach hover:underline font-semibold">
-                  udaymagz@iiserb.ac.in
+                <a href={`mailto:${officialEmail}`} className="text-uday-peach hover:underline font-semibold">
+                  {officialEmail}
                 </a>
               </div>
               <div>
-                <span className="text-white/50 block text-[10px] uppercase">Portal & Web Lead</span>
-                <span className="text-white/90 font-medium block">Souradip</span>
-                <a href="mailto:sayandeep.biswas04@gmail.com" className="text-white/70 hover:underline text-xs">
-                  sayandeep.biswas04@gmail.com
+                <span className="text-white/50 block text-[10px] uppercase">{webLeadRole}</span>
+                <span className="text-white/90 font-medium block">{webLeadName}</span>
+                <a href={`mailto:${webLeadEmail}`} className="text-white/70 hover:underline text-xs">
+                  {webLeadEmail}
                 </a>
               </div>
               <div>
                 <span className="text-white/50 block text-[10px] uppercase">Faculty Advisor</span>
-                <span className="text-white/90">Dr. Renny Thomas (Dept. of HSS)</span>
+                <span className="text-white/90">{advisorName} ({advisorDept})</span>
               </div>
             </div>
           </div>
 
         </div>
 
-        {/* Bottom Bar with Explicit Copyright to Souradip and Sayandeep */}
+        {/* Bottom Bar with Dynamic Copyright Notice */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/70">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-center sm:text-left">
-            <span>© 2024 UDAY Magazine. IISER Bhopal. All rights reserved.</span>
-            <span className="hidden sm:inline text-white/30">•</span>
-            <span className="font-semibold text-uday-peach">
-              Designed & Developed by Souradip & Sayandeep
-            </span>
+            <span className="font-medium text-white/90">{copyright}</span>
           </div>
 
           <div className="flex items-center gap-4">

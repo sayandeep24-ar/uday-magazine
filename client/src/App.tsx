@@ -15,7 +15,7 @@ import { ArticleReaderModal } from './components/ArticleReaderModal';
 import { BlogReaderModal } from './components/BlogReaderModal';
 import { BlogItem } from './components/CommunityBlogsSection';
 import { GalleryItem } from './components/ImageGallerySection';
-import { Article, FEATURED_ARTICLES } from './data/publicationData';
+import { Article, FEATURED_ARTICLES, TeamAndContact, EDITORIAL_BOARD } from './data/publicationData';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { RenderWakeupLanding } from './components/RenderWakeupLanding';
 
@@ -57,6 +57,7 @@ function AppContent() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [events, setEvents] = useState<{ upcoming: any[]; past: any[] }>({ upcoming: [], past: [] });
   const [magazines, setMagazines] = useState<any[]>([]);
+  const [team, setTeam] = useState<TeamAndContact>(EDITORIAL_BOARD);
 
   // Modals state
   const [isSubmitOpen, setIsSubmitOpen] = useState(false);
@@ -106,6 +107,15 @@ function AppContent() {
       if (resMag.ok) {
         const data = await resMag.json();
         setMagazines(data.magazines || []);
+      }
+
+      // Team directory & footer contact
+      const resTeam = await fetch('/api/team');
+      if (resTeam.ok) {
+        const data = await resTeam.json();
+        if (data.teamAndContact) {
+          setTeam(data.teamAndContact);
+        }
       }
     } catch (err) {
       console.error('Error loading data:', err);
@@ -230,7 +240,7 @@ function AppContent() {
           <Route
             path="/events"
             element={
-              <EventsPage events={events} />
+              <EventsPage events={events} announcements={announcements} />
             }
           />
 
@@ -260,6 +270,7 @@ function AppContent() {
       {/* Global Footer */}
       <Footer
         onOpenSubmit={() => setIsSubmitOpen(true)}
+        team={team}
       />
 
       {/* Modals */}
