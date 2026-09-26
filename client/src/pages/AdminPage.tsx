@@ -5,7 +5,7 @@ import {
   PlusCircle, Download, RefreshCw, AlertCircle, CheckCircle2, Upload, FileText,
   Users, UserCheck, Edit3, Plus, Save, Phone, MapPin, Eye, EyeOff,
   Calendar, Bell, Sparkles, Bookmark, Search, Star, Copy, ChevronDown, ChevronUp,
-  SlidersHorizontal, Filter, MessageCircle
+  SlidersHorizontal, Filter, MessageCircle, X
 } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 import { EDITORIAL_BOARD, TeamAndContact, LeadTeamMember } from '../data/publicationData';
@@ -51,8 +51,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [savingEditorNote, setSavingEditorNote] = useState(false);
   const [editorNoteMsg, setEditorNoteMsg] = useState('');
 
-  // Blog management state
+  // Blog management state & review controls
   const [adminBlogs, setAdminBlogs] = useState<any[]>([]);
+  const [readingBlogModal, setReadingBlogModal] = useState<any | null>(null);
+  const [expandedBlogIds, setExpandedBlogIds] = useState<string[]>([]);
+  const [blogSearchQuery, setBlogSearchQuery] = useState('');
+  const [blogStatusFilter, setBlogStatusFilter] = useState<'all' | 'pending' | 'approved' | 'expired'>('all');
+
+  const toggleExpandBlog = (id: string) => {
+    setExpandedBlogIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   // Gallery state
   const [galleryTitle, setGalleryTitle] = useState('');
@@ -694,7 +704,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         },
         body: JSON.stringify({ action })
       });
-      if (res.ok) loadAllAdminData();
+      if (res.ok) {
+        loadAllAdminData();
+        setReadingBlogModal((prev: any) => (prev && prev.id === id ? null : prev));
+      }
     } catch (err) {
       alert('Action error');
     }
@@ -1384,109 +1397,486 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
               )}
 
               {/* TAB 2: COMMUNITY BLOGS */}
-              {activeTab === 'blogs' && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="border-b border-uday-peach/30 pb-3">
-                    <h3 className="font-serif text-2xl font-bold text-uday-midnight">Community Blogs Approval Queue</h3>
-                    <p className="text-xs text-uday-midnight/70">
-                      Submissions from students and researchers. Approved pieces stay live for <strong>30 days</strong>.
-                    </p>
-                  </div>
+              {activeTab === 'blogs' && (() => {
+                const pendingCount = adminBlogs.filter(b => b.status === 'pending').length;
+                const approvedCount = adminBlogs.filter(b => b.status === 'approved' && !b.isExpired).length;
+                const expiredCount = adminBlogs.filter(b => b.isExpired || b.status === 'rejected').length;
 
-                  <div className="space-y-4">
-                    {adminBlogs.map(blog => {
-                      const isPending = blog.status === 'pending';
-                      const isApproved = blog.status === 'approved';
-                      const isExpired = blog.isExpired;
+                const filteredBlogs = adminBlogs.filter(blog => {
+                  const matchesStatus =
+                    blogStatusFilter === 'all'
+                      ? true
+                      : blogStatusFilter === 'pending'
+                      ? blog.status === 'pending'
+                      : blogStatusFilter === 'approved'
+                      ? blog.status === 'approved' && !blog.isExpired
+                      : blog.isExpired || blog.status === 'rejected';
+
+                  const q = blogSearchQuery.toLowerCase().trim();
+                  const matchesQuery =
+                    !q ||
+                    (blog.title || '').toLowerCase().includes(q) ||
+                    (blog.author || '').toLowerCase().includes(q) ||
+                    (blog.email || '').toLowerCase().includes(q) ||
+                    (blog.category || '').toLowerCase().includes(q) ||
+                    (blog.content || '').toLowerCase().includes(q);
+
+                  return matchesStatus && matchesQuery;
+                });
+
+                return (
+                  <div className="space-y-6 animate-fadeIn">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-uday-peach/30 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2.5">
+                          <h3 className="font-serif text-2xl font-bold text-uday-midnight">Community Blogs Approval Queue</h3>
+                          {pendingCount > 0 && (
+                            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                              {pendingCount} Pending Review
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-uday-midnight/70 mt-1">
+                          Review student and researcher articles. Read the complete text inline or in the full reader modal before approving. Approved pieces stay live for <strong>30 days</strong>.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Filter Tabs and Search Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-uday-peach/50 shadow-sm space-y-3">
+                      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                        {/* Status Tabs */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setBlogStatusFilter('all')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              blogStatusFilter === 'all'
+                                ? 'bg-uday-midnight text-white'
+                                : 'bg-[#FAF7F2] text-uday-midnight/70 hover:text-uday-midnight'
+                            }`}
+                          >
+                            All ({adminBlogs.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBlogStatusFilter('pending')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                              blogStatusFilter === 'pending'
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
+                            }`}
+                          >
+                            <span>Pending Review</span>
+                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                              blogStatusFilter === 'pending' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
+                            }`}>
+                              {pendingCount}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBlogStatusFilter('approved')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              blogStatusFilter === 'approved'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-[#FAF7F2] text-uday-midnight/70 hover:text-uday-midnight'
+                            }`}
+                          >
+                            Approved & Live ({approvedCount})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBlogStatusFilter('expired')}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                              blogStatusFilter === 'expired'
+                                ? 'bg-stone-600 text-white'
+                                : 'bg-[#FAF7F2] text-uday-midnight/70 hover:text-uday-midnight'
+                            }`}
+                          >
+                            Archived / Expired ({expiredCount})
+                          </button>
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="relative min-w-[240px]">
+                          <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                          <input
+                            type="text"
+                            placeholder="Search by title, author, keyword..."
+                            value={blogSearchQuery}
+                            onChange={e => setBlogSearchQuery(e.target.value)}
+                            className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl pl-8 pr-7 py-1.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
+                          />
+                          {blogSearchQuery && (
+                            <button
+                              type="button"
+                              onClick={() => setBlogSearchQuery('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Blog Cards List */}
+                    {filteredBlogs.length === 0 ? (
+                      <div className="bg-white rounded-2xl border border-uday-peach/40 p-10 text-center space-y-2">
+                        <BookOpen className="w-8 h-8 text-stone-300 mx-auto" />
+                        <h5 className="font-serif text-base font-bold text-uday-midnight">No Articles Found</h5>
+                        <p className="text-xs text-gray-500">
+                          {blogSearchQuery || blogStatusFilter !== 'all'
+                            ? 'No blog submissions match your current filters.'
+                            : 'There are currently no blog submissions in this queue.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredBlogs.map(blog => {
+                          const isPending = blog.status === 'pending';
+                          const isApproved = blog.status === 'approved';
+                          const isExpired = blog.isExpired;
+                          const isExpanded = expandedBlogIds.includes(blog.id);
+                          const wordCount = (blog.content || '').split(/\s+/).filter(Boolean).length;
+                          const estReadTime = Math.max(1, Math.ceil(wordCount / 200));
+
+                          return (
+                            <div
+                              key={blog.id}
+                              className={`p-5 rounded-2xl border transition-all ${
+                                isPending
+                                  ? 'bg-amber-50/60 border-amber-300 shadow-sm'
+                                  : isApproved && !isExpired
+                                  ? 'bg-emerald-50/40 border-emerald-200'
+                                  : 'bg-white border-gray-200'
+                              }`}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                                <div className="space-y-2 flex-1">
+                                  {/* Badge & Category Row */}
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                                        isPending
+                                          ? 'bg-amber-200 text-amber-900 border border-amber-300'
+                                          : isApproved && !isExpired
+                                          ? 'bg-emerald-200 text-emerald-900 border border-emerald-300'
+                                          : 'bg-gray-200 text-gray-800'
+                                      }`}
+                                    >
+                                      {isExpired ? 'EXPIRED (30 DAYS COMPLETED)' : blog.status.toUpperCase()}
+                                    </span>
+                                    <span className="text-xs font-semibold text-uday-teal bg-uday-teal/10 px-2 py-0.5 rounded-full">
+                                      {blog.category}
+                                    </span>
+                                    <span className="text-[11px] text-gray-500 font-medium">
+                                      {wordCount} words • ~{estReadTime} min read
+                                    </span>
+                                  </div>
+
+                                  {/* Title */}
+                                  <h4 className="font-serif text-xl font-bold text-uday-midnight leading-snug">
+                                    {blog.title}
+                                  </h4>
+
+                                  {/* Author & Submission Date */}
+                                  <p className="text-xs text-uday-midnight/70 font-medium flex flex-wrap items-center gap-1.5">
+                                    <span>By <strong>{blog.author}</strong></span>
+                                    <span>•</span>
+                                    <a
+                                      href={`mailto:${blog.email}?subject=Regarding your Uday Blog: ${encodeURIComponent(blog.title)}`}
+                                      className="text-uday-crimson hover:underline inline-flex items-center gap-1"
+                                    >
+                                      <Mail className="w-3 h-3" />
+                                      {blog.email}
+                                    </a>
+                                    <span>•</span>
+                                    <span>Submitted: {new Date(blog.submittedAt).toLocaleDateString()}</span>
+                                  </p>
+
+                                  {/* Tags */}
+                                  {blog.tags && blog.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1 pt-0.5">
+                                      {blog.tags.map((tag: string, idx: number) => (
+                                        <span
+                                          key={idx}
+                                          className="text-[10px] font-medium bg-white text-uday-teal px-2 py-0.5 rounded-full border border-uday-peach/50"
+                                        >
+                                          #{tag}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Excerpt Box */}
+                                  <div className="bg-white/90 p-3 rounded-xl border border-uday-peach/40 text-xs text-uday-midnight/80 italic">
+                                    "{blog.excerpt}"
+                                  </div>
+
+                                  {/* Approved 30-Day Window Status */}
+                                  {isApproved && (
+                                    <div className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1.5 pt-0.5">
+                                      <Clock className="w-3.5 h-3.5" />
+                                      <span>
+                                        {isExpired
+                                          ? 'Featured period expired'
+                                          : `Featured live on website: ${blog.daysRemaining} days remaining (Expires: ${new Date(blog.expiresAt).toLocaleDateString()})`}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* INLINE EXPANDED FULL ARTICLE BODY */}
+                                  {isExpanded && (
+                                    <div className="mt-4 pt-4 border-t border-uday-peach/40 space-y-4 animate-scaleUp">
+                                      {blog.coverImage && (
+                                        <div className="rounded-xl overflow-hidden max-h-72 w-full border border-uday-peach/40 shadow-sm">
+                                          <img
+                                            src={blog.coverImage}
+                                            alt={blog.title}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                      )}
+
+                                      <div className="bg-white rounded-xl p-5 border border-uday-peach/50 space-y-3">
+                                        <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                                          <span className="text-[11px] font-bold text-uday-crimson uppercase tracking-wider flex items-center gap-1.5">
+                                            <BookOpen className="w-3.5 h-3.5" /> Full Article Content ({wordCount} words)
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={() => setReadingBlogModal(blog)}
+                                            className="text-xs text-uday-teal hover:underline flex items-center gap-1 font-semibold"
+                                          >
+                                            <Eye className="w-3.5 h-3.5" /> Open In Fullscreen Modal
+                                          </button>
+                                        </div>
+
+                                        <div className="text-uday-midnight font-serif text-sm sm:text-base leading-relaxed sm:leading-loose whitespace-pre-line select-text">
+                                          {blog.content}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Right Side Actions Toolbar */}
+                                <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
+                                  {/* Toggle Inline Full Text */}
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleExpandBlog(blog.id)}
+                                    className="px-3.5 py-2 bg-white hover:bg-stone-100 text-uday-midnight border border-uday-peach/60 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                                  >
+                                    <BookOpen className="w-3.5 h-3.5 text-uday-crimson" />
+                                    <span>{isExpanded ? 'Hide Article' : 'Read Full Article'}</span>
+                                  </button>
+
+                                  {/* Distraction-Free Modal Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setReadingBlogModal(blog)}
+                                    className="px-3.5 py-2 bg-white hover:bg-stone-100 text-uday-teal border border-uday-teal/40 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                                  >
+                                    <Eye className="w-3.5 h-3.5" />
+                                    <span>Full Reader View</span>
+                                  </button>
+
+                                  {isPending && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBlogAction(blog.id, 'approve')}
+                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+                                      >
+                                        <Check className="w-3.5 h-3.5" /> Approve (30 Days)
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBlogAction(blog.id, 'reject')}
+                                        className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-xs font-bold transition-all"
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {isApproved && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBlogAction(blog.id, 'extend_30_days')}
+                                      className="px-3 py-1.5 bg-uday-teal/15 hover:bg-uday-teal/25 text-uday-teal rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1"
+                                    >
+                                      <RefreshCw className="w-3 h-3" /> +30 Days Extend
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBlogAction(blog.id, 'delete')}
+                                    className="px-3 py-1.5 text-gray-400 hover:text-red-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Remove
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* DEDICATED FULLSCREEN EDITORIAL REVIEW READER MODAL */}
+                    {readingBlogModal && (() => {
+                      const modalPending = readingBlogModal.status === 'pending';
+                      const modalApproved = readingBlogModal.status === 'approved';
+                      const modalWordCount = (readingBlogModal.content || '').split(/\s+/).filter(Boolean).length;
+                      const modalReadTime = Math.max(1, Math.ceil(modalWordCount / 200));
 
                       return (
-                        <div
-                          key={blog.id}
-                          className={`p-5 rounded-2xl border transition-all ${
-                            isPending
-                              ? 'bg-amber-50/70 border-amber-300'
-                              : isApproved && !isExpired
-                              ? 'bg-emerald-50/50 border-emerald-200'
-                              : 'bg-gray-50 border-gray-200'
-                          }`}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                            <div className="space-y-1.5 flex-1">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn overflow-y-auto">
+                          <div className="bg-[#FAF7F2] rounded-3xl border border-uday-peach shadow-2xl max-w-3xl w-full my-6 overflow-hidden relative animate-scaleUp flex flex-col max-h-[92vh]">
+                            {/* Modal Header */}
+                            <div className="bg-white border-b border-uday-peach/40 px-6 py-4 flex items-center justify-between shrink-0">
                               <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                                  isPending
-                                    ? 'bg-amber-200 text-amber-900'
-                                    : isApproved && !isExpired
-                                    ? 'bg-emerald-200 text-emerald-900'
-                                    : 'bg-gray-200 text-gray-800'
-                                }`}>
-                                  {isExpired ? 'EXPIRED (30 DAYS COMPLETED)' : blog.status.toUpperCase()}
+                                <span
+                                  className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
+                                    modalPending
+                                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                      : modalApproved
+                                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                                      : 'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {readingBlogModal.status.toUpperCase()}
                                 </span>
-                                <span className="text-xs font-semibold text-uday-teal">{blog.category}</span>
+                                <span className="text-xs font-bold text-uday-teal bg-uday-teal/10 px-2.5 py-0.5 rounded-full">
+                                  {readingBlogModal.category}
+                                </span>
+                                <span className="text-xs text-gray-400 hidden sm:inline">
+                                  {modalWordCount} words • ~{modalReadTime} min read
+                                </span>
                               </div>
 
-                              <h5 className="font-serif text-lg font-bold text-uday-midnight">{blog.title}</h5>
-                              <p className="text-xs text-uday-midnight/70 font-medium">
-                                By <strong>{blog.author}</strong> ({blog.email}) • Submitted: {new Date(blog.submittedAt).toLocaleDateString()}
-                              </p>
-
-                              <p className="text-xs text-uday-midnight/80 italic line-clamp-2 pt-1">
-                                "{blog.excerpt}"
-                              </p>
-
-                              {isApproved && (
-                                <div className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1 pt-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>
-                                    {isExpired
-                                      ? 'Featured period expired'
-                                      : `Featured: ${blog.daysRemaining} days remaining (Expires: ${new Date(blog.expiresAt).toLocaleDateString()})`}
-                                  </span>
-                                </div>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => setReadingBlogModal(null)}
+                                className="p-2 text-gray-400 hover:text-uday-midnight hover:bg-gray-100 rounded-full transition-colors"
+                              >
+                                <X className="w-5 h-5" />
+                              </button>
                             </div>
 
-                            <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
-                              {isPending && (
-                                <>
-                                  <button
-                                    onClick={() => handleBlogAction(blog.id, 'approve')}
-                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
-                                  >
-                                    <Check className="w-3.5 h-3.5" /> Approve (30 Days)
-                                  </button>
-                                  <button
-                                    onClick={() => handleBlogAction(blog.id, 'reject')}
-                                    className="px-4 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-xs font-bold transition-all"
-                                  >
-                                    Decline
-                                  </button>
-                                </>
+                            {/* Modal Scrollable Article Body */}
+                            <div className="p-6 sm:p-10 overflow-y-auto space-y-6">
+                              {readingBlogModal.coverImage && (
+                                <div className="rounded-2xl overflow-hidden max-h-72 w-full border border-uday-peach/30 shadow-sm">
+                                  <img
+                                    src={readingBlogModal.coverImage}
+                                    alt={readingBlogModal.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
                               )}
 
-                              {isApproved && (
+                              <div className="space-y-3 text-center border-b border-uday-peach/40 pb-6">
+                                <h1 className="font-serif text-2xl sm:text-4xl font-black text-uday-midnight leading-tight">
+                                  {readingBlogModal.title}
+                                </h1>
+
+                                <div className="flex flex-wrap items-center justify-center gap-3 text-xs text-uday-midnight/70 font-semibold">
+                                  <span>By <strong>{readingBlogModal.author}</strong></span>
+                                  <span>•</span>
+                                  <a
+                                    href={`mailto:${readingBlogModal.email}`}
+                                    className="text-uday-crimson hover:underline flex items-center gap-1"
+                                  >
+                                    <Mail className="w-3.5 h-3.5" />
+                                    {readingBlogModal.email}
+                                  </a>
+                                  <span>•</span>
+                                  <span>Submitted {new Date(readingBlogModal.submittedAt).toLocaleDateString()}</span>
+                                </div>
+
+                                {readingBlogModal.tags && readingBlogModal.tags.length > 0 && (
+                                  <div className="flex flex-wrap justify-center gap-1.5 pt-2">
+                                    {readingBlogModal.tags.map((tag: string, idx: number) => (
+                                      <span
+                                        key={idx}
+                                        className="text-[11px] font-medium bg-white text-uday-teal px-2.5 py-0.5 rounded-full border border-uday-peach/40"
+                                      >
+                                        #{tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Excerpt callout */}
+                              <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-xs italic text-amber-900 leading-relaxed">
+                                <strong>Excerpt:</strong> "{readingBlogModal.excerpt}"
+                              </div>
+
+                              {/* Full Article Content */}
+                              <div className="bg-white rounded-2xl p-6 border border-uday-peach/40 shadow-sm text-uday-midnight font-serif text-base sm:text-lg leading-relaxed sm:leading-loose whitespace-pre-line select-text">
+                                {readingBlogModal.content}
+                              </div>
+                            </div>
+
+                            {/* Sticky Modal Action Footer */}
+                            <div className="bg-white border-t border-uday-peach/40 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                              <div className="text-xs text-gray-500">
+                                Decision for <strong>{readingBlogModal.author}</strong>
+                              </div>
+
+                              <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => handleBlogAction(blog.id, 'extend_30_days')}
-                                  className="px-3 py-1.5 bg-uday-teal/15 hover:bg-uday-teal/25 text-uday-teal rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                                  type="button"
+                                  onClick={() => setReadingBlogModal(null)}
+                                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition-all"
                                 >
-                                  <RefreshCw className="w-3 h-3" /> +30 Days Extend
+                                  Close Reader
                                 </button>
-                              )}
 
-                              <button
-                                onClick={() => handleBlogAction(blog.id, 'delete')}
-                                className="px-3 py-1.5 text-gray-400 hover:text-red-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Remove
-                              </button>
+                                {modalPending && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBlogAction(readingBlogModal.id, 'reject')}
+                                      className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-xl text-xs font-bold transition-all"
+                                    >
+                                      Decline Piece
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleBlogAction(readingBlogModal.id, 'approve')}
+                                      className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                                    >
+                                      <Check className="w-4 h-4" /> Approve & Publish (30 Days)
+                                    </button>
+                                  </>
+                                )}
+
+                                {modalApproved && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleBlogAction(readingBlogModal.id, 'extend_30_days')}
+                                    className="px-4 py-2 bg-uday-teal hover:bg-uday-teal/90 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" /> Extend 30 Days
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* TAB 3: GALLERY */}
               {activeTab === 'gallery' && (
