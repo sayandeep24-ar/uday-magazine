@@ -7,7 +7,10 @@
   },
   "settings": {
     "googleSheetsWebhookUrl": "",
-    "driveFolderEmbedUrl": ""
+    "driveFolderEmbedUrl": "",
+    "supabaseUrl": "https://ckwhewzlezfockfwkgpb.supabase.co",
+    "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrd2hld3psZXpmb2NrZndrZ3BiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDQ3OTYzMSwiZXhwIjoyMTA2MDU1NjMxfQ.dq7a4ZID9jPr8jIQYzYLEpqAKMYsAl8XXIn2XQGz7SQ",
+    "supabaseBucket": "uday-storage"
   },
   "announcements": [
     {

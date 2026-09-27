@@ -365,8 +365,19 @@ async function restoreDataFromSupabase() {
   if (!config.isConfigured) return false;
 
   try {
-    const downloadUrl = `${config.supabaseUrl}/storage/v1/object/public/${config.bucket}/database/data.json?t=${Date.now()}`;
-    const res = await fetch(downloadUrl);
+    // Try authenticated download first
+    const downloadUrl = `${config.supabaseUrl}/storage/v1/object/${config.bucket}/database/data.json?t=${Date.now()}`;
+    let res = await fetch(downloadUrl, {
+      headers: {
+        'apikey': config.supabaseKey,
+        'Authorization': `Bearer ${config.supabaseKey}`
+      }
+    });
+    if (!res.ok) {
+      // Fallback to public bucket endpoint
+      const publicUrl = `${config.supabaseUrl}/storage/v1/object/public/${config.bucket}/database/data.json?t=${Date.now()}`;
+      res = await fetch(publicUrl);
+    }
     if (res.ok) {
       const remoteData = await res.json();
       if (remoteData && (remoteData.magazines || remoteData.events || remoteData.blogs)) {
