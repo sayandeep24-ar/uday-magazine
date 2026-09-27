@@ -1333,6 +1333,27 @@ app.get('/api/team', (req, res) => {
   });
 });
 
+// Sanitize any image URLs in team/advisor data (e.g. Google Drive URLs)
+function sanitizeTeamImages(team) {
+  if (!team || typeof team !== 'object') return team;
+  if (team.facultyAdvisor && team.facultyAdvisor.image) {
+    team.facultyAdvisor.image = convertGoogleDriveUrl(team.facultyAdvisor.image);
+  }
+  if (team.leadTeam) {
+    ['editorInChief', 'managingEditor', 'seniorAssociateEditor', 'creativeHead'].forEach(role => {
+      if (team.leadTeam[role] && team.leadTeam[role].image) {
+        team.leadTeam[role].image = convertGoogleDriveUrl(team.leadTeam[role].image);
+      }
+    });
+    if (Array.isArray(team.leadTeam.associateEditors)) {
+      team.leadTeam.associateEditors.forEach(member => {
+        if (member && member.image) member.image = convertGoogleDriveUrl(member.image);
+      });
+    }
+  }
+  return team;
+}
+
 // POST /api/admin/team - Admin update directory, teams, advisor, contacts
 app.post('/api/admin/team', requireAdmin, (req, res) => {
   const data = readData();
@@ -1341,9 +1362,10 @@ app.post('/api/admin/team', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'Invalid team data provided.' });
   }
 
+  const sanitized = sanitizeTeamImages(updated);
   data.teamAndContact = {
     ...data.teamAndContact,
-    ...updated,
+    ...sanitized,
     lastUpdated: new Date().toISOString()
   };
 
@@ -1480,7 +1502,7 @@ app.post('/api/admin/events', requireAdmin, upload.any(), async (req, res) => {
       const idx = data.events[listKey].findIndex(e => e.id === id);
       if (idx !== -1) {
         found = true;
-        const current = data.events[listKey][idx];
+        const effectiveLabel = (linkText || cta || current.linkText || current.cta || 'RSVP Online').trim();
         const updated = {
           ...current,
           title: title.trim(),
@@ -1490,11 +1512,11 @@ app.post('/api/admin/events', requireAdmin, upload.any(), async (req, res) => {
           venue: (venue || current.venue || 'IISER Bhopal Campus').trim(),
           description: (description !== undefined ? description : current.description || '').trim(),
           badge: badge !== undefined ? badge.trim() : current.badge,
-          cta: cta ? cta.trim() : (current.cta || 'RSVP Online'),
+          cta: effectiveLabel,
+          linkText: effectiveLabel,
           image: finalImage || current.image,
           attendees: attendees ? attendees.trim() : current.attendees,
           link: link !== undefined ? link.trim() : (current.link || ''),
-          linkText: linkText ? linkText.trim() : (current.linkText || 'RSVP Online'),
           updatedAt: new Date().toISOString()
         };
 
@@ -1515,6 +1537,7 @@ app.post('/api/admin/events', requireAdmin, upload.any(), async (req, res) => {
       ? `pev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`
       : `ev-${Date.now()}-${crypto.randomBytes(2).toString('hex')}`;
 
+    const effectiveLabel = (linkText || cta || 'RSVP Online').trim();
     const eventObj = {
       id: eventId,
       title: title.trim(),
@@ -1524,11 +1547,11 @@ app.post('/api/admin/events', requireAdmin, upload.any(), async (req, res) => {
       venue: (venue || 'IISER Bhopal Campus').trim(),
       description: (description || '').trim(),
       badge: badge ? badge.trim() : undefined,
-      cta: cta ? cta.trim() : 'RSVP Online',
+      cta: effectiveLabel,
+      linkText: effectiveLabel,
       image: finalImage,
       attendees: attendees ? attendees.trim() : 'Campus Community',
       link: link ? link.trim() : '',
-      linkText: linkText ? linkText.trim() : 'RSVP Online',
       createdAt: new Date().toISOString()
     };
 
@@ -1581,10 +1604,13 @@ app.put('/api/admin/events/:id', requireAdmin, upload.any(), async (req, res) =>
   if (venue !== undefined) existingEvent.venue = venue.trim();
   if (description !== undefined) existingEvent.description = description.trim();
   if (badge !== undefined) existingEvent.badge = badge.trim();
-  if (cta !== undefined) existingEvent.cta = cta.trim();
+  const effectiveLabel = (linkText !== undefined && linkText !== '' ? linkText : (cta !== undefined ? cta : '')).trim();
+  if (effectiveLabel) {
+    existingEvent.linkText = effectiveLabel;
+    existingEvent.cta = effectiveLabel;
+  }
   if (attendees !== undefined) existingEvent.attendees = attendees.trim();
   if (link !== undefined) existingEvent.link = link.trim();
-  if (linkText !== undefined) existingEvent.linkText = linkText.trim();
   if (imageUrl) existingEvent.image = convertGoogleDriveUrl(imageUrl.trim());
   const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
   if (uploadedFile) {

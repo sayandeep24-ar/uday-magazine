@@ -223,39 +223,39 @@ export const EventsPage: React.FC<EventsPageProps> = ({ events: propEvents, anno
               </div>
 
               <div className="p-6 pt-0 sm:p-7 sm:pt-0 space-y-2.5 border-t border-uday-peach/40 mt-auto">
-                {/* Event External Link Button */}
-                {event.link && (
+                {/* Event Primary Action Button */}
+                {event.link ? (
                   <a
                     href={event.link}
                     target={event.link.startsWith('http') ? '_blank' : '_self'}
                     rel="noreferrer"
-                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-uday-teal text-uday-teal hover:bg-uday-teal hover:text-white transition-all shadow-sm"
+                    className="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 bg-uday-midnight text-white hover:bg-uday-crimson transition-all shadow-sm group"
                   >
-                    <span>{event.linkText || 'Open Event Link'}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{event.linkText || event.cta || 'RSVP Online'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </a>
+                ) : (
+                  <button
+                    onClick={() => handleRsvp(event.id)}
+                    disabled={rsvpState[event.id]}
+                    className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
+                      rsvpState[event.id]
+                        ? 'bg-uday-sage text-white'
+                        : 'bg-uday-midnight text-white hover:bg-uday-crimson shadow-sm'
+                    }`}
+                  >
+                    {rsvpState[event.id] ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" /> RSVP Confirmed
+                      </>
+                    ) : (
+                      <>
+                        <span>{event.cta || event.linkText || 'RSVP Now'}</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
                 )}
-
-                <button
-                  onClick={() => handleRsvp(event.id)}
-                  disabled={rsvpState[event.id]}
-                  className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all ${
-                    rsvpState[event.id]
-                      ? 'bg-uday-sage text-white'
-                      : 'bg-uday-midnight text-white hover:bg-uday-crimson shadow-sm'
-                  }`}
-                >
-                  {rsvpState[event.id] ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" /> RSVP Confirmed
-                    </>
-                  ) : (
-                    <>
-                      <span>{event.cta || 'RSVP Now'}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
               </div>
             </div>
           ))}

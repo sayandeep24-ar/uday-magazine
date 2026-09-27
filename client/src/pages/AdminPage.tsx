@@ -90,6 +90,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [eventStatus, setEventStatus] = useState<'upcoming' | 'past'>('upcoming');
   const [uploadingEvent, setUploadingEvent] = useState(false);
   const [eventSuccessMsg, setEventSuccessMsg] = useState('');
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   const parseEventsList = (raw: any): any[] => {
     if (Array.isArray(raw)) return raw;
@@ -546,6 +547,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
     setEventSuccessMsg('');
     try {
       const formData = new FormData();
+      if (editingEventId) {
+        formData.append('id', editingEventId);
+      }
       formData.append('title', eventTitle.trim());
       formData.append('date', eventDate.trim());
       formData.append('time', eventTime.trim());
@@ -553,7 +557,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       formData.append('category', eventCategory.trim() || 'Featured Event');
       formData.append('description', eventDesc.trim());
       formData.append('link', eventLink.trim());
-      formData.append('linkText', eventLinkText.trim() || 'RSVP Online');
+      const trimmedLabel = eventLinkText.trim() || 'RSVP Online';
+      formData.append('linkText', trimmedLabel);
+      formData.append('cta', trimmedLabel);
       formData.append('status', eventStatus);
       if (eventImageFile) {
         formData.append('image', eventImageFile);
@@ -568,10 +574,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         body: formData
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create event');
+      if (!res.ok) throw new Error(data.error || 'Failed to save event');
 
-      setEventSuccessMsg(`Event successfully published to ${eventStatus === 'past' ? 'Past Archives' : 'Upcoming Events'}!`);
+      setEventSuccessMsg(editingEventId ? 'Event successfully updated!' : `Event successfully published to ${eventStatus === 'past' ? 'Past Archives' : 'Upcoming Events'}!`);
       setEventsList(parseEventsList(data.events));
+      setEditingEventId(null);
       setEventTitle('');
       setEventDate('');
       setEventTime('');
@@ -585,10 +592,42 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
       setEventStatus('upcoming');
       setTimeout(() => setEventSuccessMsg(''), 5000);
     } catch (err: any) {
-      alert('Error creating event: ' + err.message);
+      alert('Error saving event: ' + err.message);
     } finally {
       setUploadingEvent(false);
     }
+  };
+
+  const handleStartEditEvent = (ev: any) => {
+    setEditingEventId(ev.id);
+    setEventTitle(ev.title || '');
+    setEventDate(ev.date || '');
+    setEventTime(ev.time || '');
+    setEventVenue(ev.venue || '');
+    setEventCategory(ev.category || 'Featured Event');
+    setEventDesc(ev.description || '');
+    setEventLink(ev.link || '');
+    setEventLinkText(ev.linkText || ev.cta || 'RSVP Online');
+    setEventImageUrl(ev.image || '');
+    setEventImageFile(null);
+    setEventStatus((ev.eventType === 'past' || ev.id.startsWith('pev')) ? 'past' : 'upcoming');
+    const formElement = document.getElementById('admin-event-form');
+    if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleCancelEditEvent = () => {
+    setEditingEventId(null);
+    setEventTitle('');
+    setEventDate('');
+    setEventTime('');
+    setEventVenue('');
+    setEventCategory('Featured Event');
+    setEventDesc('');
+    setEventLink('');
+    setEventLinkText('RSVP Online');
+    setEventImageUrl('');
+    setEventImageFile(null);
+    setEventStatus('upcoming');
   };
 
   const handleDeleteEvent = async (id: string) => {
@@ -2659,7 +2698,23 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                       </div>
                     )}
 
-                    <form onSubmit={handleCreateEvent} className="space-y-4">
+                    {editingEventId && (
+                      <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-900 rounded-xl text-xs font-semibold flex flex-wrap items-center justify-between gap-2 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Edit3 className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>Currently Editing: <strong>{eventTitle || 'Selected Event'}</strong></span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCancelEditEvent}
+                          className="px-2.5 py-1 text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 rounded-lg transition-all"
+                        >
+                          ✕ Cancel Editing
+                        </button>
+                      </div>
+                    )}
+
+                    <form id="admin-event-form" onSubmit={handleCreateEvent} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="sm:col-span-2">
                           <label className="block text-xs font-bold text-uday-midnight mb-1">Event Title *</label>
@@ -2802,14 +2857,34 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                         </div>
                       </div>
 
-                      <button
-                        type="submit"
-                        disabled={uploadingEvent}
-                        className="px-6 py-3 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm flex items-center gap-2 transition-all"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>{uploadingEvent ? 'Publishing Event...' : 'Publish Event to Website'}</span>
-                      </button>
+                      {editingEventId ? (
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="submit"
+                            disabled={uploadingEvent}
+                            className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm flex items-center gap-2 transition-all"
+                          >
+                            <Save className="w-4 h-4" />
+                            <span>{uploadingEvent ? 'Updating Event...' : 'Save & Update Event'}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEditEvent}
+                            className="px-4 py-3 bg-white border border-uday-peach/70 hover:bg-uday-cream text-uday-midnight rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                          >
+                            Cancel Edit
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={uploadingEvent}
+                          className="px-6 py-3 bg-gradient-to-r from-uday-crimson to-uday-orange text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:opacity-95 shadow-warm flex items-center gap-2 transition-all"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>{uploadingEvent ? 'Publishing Event...' : 'Publish Event to Website'}</span>
+                        </button>
+                      )}
                     </form>
 
                     {/* Existing Events List */}
@@ -2855,6 +2930,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                               <div className="pt-2 border-t border-uday-peach/30 flex flex-wrap items-center justify-between gap-2">
                                 <span className="text-[11px] text-gray-500">{ev.time} • {ev.venue}</span>
                                 <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditEvent(ev)}
+                                    className="px-2.5 py-1.5 text-amber-800 bg-amber-100 hover:bg-amber-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-amber-300 flex items-center gap-1 shadow-sm"
+                                    title="Edit Event Details & Link"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                    <span>Edit</span>
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => handleToggleEventStatus(ev.id, ev.eventType)}
