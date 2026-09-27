@@ -257,11 +257,138 @@ async function syncDataToGitHub(data) {
   }
 }
 
+// ==========================================
+// SUPABASE CLOUD STORAGE & DATABASE PERSISTENCE ENGINE
+// ==========================================
+
+function getSupabaseConfig(data) {
+  const currentSettings = (data && data.settings) ? data.settings : {};
+  const supabaseUrl = (process.env.SUPABASE_URL || currentSettings.supabaseUrl || '').replace(/\/$/, '');
+  const supabaseKey = process.env.SUPABASE_KEY || currentSettings.supabaseKey || '';
+  const bucket = process.env.SUPABASE_BUCKET || currentSettings.supabaseBucket || 'uday-storage';
+  return {
+    supabaseUrl,
+    supabaseKey,
+    bucket,
+    isConfigured: !!(supabaseUrl && supabaseKey)
+  };
+}
+
+// Ensure Supabase bucket exists (and is public for direct CDN access)
+async function ensureSupabaseBucket(supabaseUrl, supabaseKey, bucketName) {
+  try {
+    const res = await fetch(`${supabaseUrl}/storage/v1/bucket`, {
+      method: 'POST',
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: bucketName, name: bucketName, public: true })
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Upload buffer directly to Supabase Storage
+async function uploadToSupabase(fileBuffer, filePath, mimeType) {
+  const data = readData();
+  const config = getSupabaseConfig(data);
+  if (!config.isConfigured) return null;
+
+  try {
+    await ensureSupabaseBucket(config.supabaseUrl, config.supabaseKey, config.bucket);
+
+    const uploadUrl = `${config.supabaseUrl}/storage/v1/object/${config.bucket}/${filePath}`;
+    const res = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': config.supabaseKey,
+        'Authorization': `Bearer ${config.supabaseKey}`,
+        'Content-Type': mimeType || 'application/octet-stream',
+        'x-upsert': 'true'
+      },
+      body: fileBuffer
+    });
+
+    if (res.ok) {
+      const publicUrl = `${config.supabaseUrl}/storage/v1/object/public/${config.bucket}/${filePath}`;
+      console.log(`✓ Supabase Cloud Storage upload success: ${publicUrl}`);
+      return publicUrl;
+    } else {
+      const errText = await res.text();
+      console.warn('Supabase upload response notice:', errText);
+      return null;
+    }
+  } catch (err) {
+    console.error('Supabase upload failed:', err.message);
+    return null;
+  }
+}
+
+// Sync data.json to Supabase Cloud Storage so it survives Render sleep/restart
+async function syncDataToSupabase(data) {
+  const config = getSupabaseConfig(data);
+  if (!config.isConfigured) return false;
+
+  try {
+    await ensureSupabaseBucket(config.supabaseUrl, config.supabaseKey, config.bucket);
+    const jsonBuffer = Buffer.from(JSON.stringify(data, null, 2), 'utf-8');
+    const uploadUrl = `${config.supabaseUrl}/storage/v1/object/${config.bucket}/database/data.json`;
+    const res = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': config.supabaseKey,
+        'Authorization': `Bearer ${config.supabaseKey}`,
+        'Content-Type': 'application/json',
+        'x-upsert': 'true'
+      },
+      body: jsonBuffer
+    });
+
+    if (res.ok) {
+      console.log('✓ Successfully synced database data.json to Supabase Cloud Storage.');
+      return true;
+    }
+  } catch (err) {
+    console.error('Failed to sync data.json to Supabase:', err.message);
+  }
+  return false;
+}
+
+// Restore latest data.json from Supabase on server startup
+async function restoreDataFromSupabase() {
+  const currentData = readData();
+  const config = getSupabaseConfig(currentData);
+  if (!config.isConfigured) return false;
+
+  try {
+    const downloadUrl = `${config.supabaseUrl}/storage/v1/object/public/${config.bucket}/database/data.json?t=${Date.now()}`;
+    const res = await fetch(downloadUrl);
+    if (res.ok) {
+      const remoteData = await res.json();
+      if (remoteData && (remoteData.magazines || remoteData.events || remoteData.blogs)) {
+        // Keep any active server credentials
+        remoteData.settings = { ...(remoteData.settings || {}), ...(currentData.settings || {}) };
+        fs.writeFileSync(DATA_FILE, JSON.stringify(remoteData, null, 2), 'utf8');
+        console.log('✓ Successfully restored latest data.json from Supabase Cloud Storage on startup!');
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase restore check on startup:', err.message);
+  }
+  return false;
+}
+
 // Helper to write data safely
 function writeData(data, skipSync = false) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
     if (!skipSync) {
+      syncDataToSupabase(data).catch(() => {});
       syncDataToGitHub(data).catch(() => {});
     }
     return true;
@@ -331,13 +458,16 @@ async function dispatchEmailNotification({ to, subject, text, html, metadata = {
 }
 
 // Helper to convert Google Drive share link to direct stream link
-function convertGoogleDriveUrl(url) {
+function convertGoogleDriveUrl(url, isPdf = false) {
   if (!url) return '';
   const matchFile = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   const fileId = matchFile ? matchFile[1] : (matchId ? matchId[1] : null);
 
   if (fileId) {
+    if (isPdf) {
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
   }
   return url;
@@ -825,7 +955,7 @@ app.post('/api/admin/confirm-password-change', async (req, res) => {
 app.post('/api/magazines', requireAdmin, upload.fields([
   { name: 'pdf', maxCount: 1 },
   { name: 'cover', maxCount: 1 }
-]), (req, res) => {
+]), async (req, res) => {
   const { volumeNumber, year, title, theme, editorInChief, pagesCount, releaseDate, description, pdfUrl, coverImageUrl } = req.body;
   const data = readData();
 
@@ -834,12 +964,21 @@ app.post('/api/magazines', requireAdmin, upload.fields([
 
   if (req.files) {
     if (req.files.pdf && req.files.pdf[0]) {
-      finalPdfUrl = `/uploads/${req.files.pdf[0].filename}`;
+      const file = req.files.pdf[0];
+      const fileBuffer = fs.readFileSync(file.path);
+      const cloudUrl = await uploadToSupabase(fileBuffer, `magazines/${file.filename}`, 'application/pdf');
+      finalPdfUrl = cloudUrl || `/uploads/${file.filename}`;
     }
     if (req.files.cover && req.files.cover[0]) {
-      finalCoverUrl = `/uploads/${req.files.cover[0].filename}`;
+      const file = req.files.cover[0];
+      const fileBuffer = fs.readFileSync(file.path);
+      const cloudUrl = await uploadToSupabase(fileBuffer, `magazines/${file.filename}`, file.mimetype);
+      finalCoverUrl = cloudUrl || `/uploads/${file.filename}`;
     }
   }
+
+  if (finalPdfUrl) finalPdfUrl = convertGoogleDriveUrl(finalPdfUrl, true);
+  if (finalCoverUrl) finalCoverUrl = convertGoogleDriveUrl(finalCoverUrl, false);
 
   if (!finalPdfUrl) {
     return res.status(400).json({ error: 'Please upload a PDF file or provide a public PDF / Google Drive link.' });
@@ -902,7 +1041,7 @@ app.post('/api/admin/magazines/:id/feature', requireAdmin, (req, res) => {
 app.put('/api/admin/magazines/:id', requireAdmin, upload.fields([
   { name: 'pdf', maxCount: 1 },
   { name: 'cover', maxCount: 1 }
-]), (req, res) => {
+]), async (req, res) => {
   const { id } = req.params;
   const data = readData();
   if (!data.magazines) data.magazines = [];
@@ -919,14 +1058,20 @@ app.put('/api/admin/magazines/:id', requireAdmin, upload.fields([
   if (pagesCount) mag.pagesCount = Number(pagesCount);
   if (releaseDate) mag.releaseDate = releaseDate.trim();
   if (description !== undefined) mag.description = description.trim();
-  if (pdfUrl) mag.pdfUrl = pdfUrl.trim();
-  if (coverImageUrl) mag.coverImage = coverImageUrl.trim();
+  if (pdfUrl) mag.pdfUrl = convertGoogleDriveUrl(pdfUrl.trim(), true);
+  if (coverImageUrl) mag.coverImage = convertGoogleDriveUrl(coverImageUrl.trim(), false);
   if (req.files) {
     if (req.files.pdf && req.files.pdf[0]) {
-      mag.pdfUrl = `/uploads/${req.files.pdf[0].filename}`;
+      const file = req.files.pdf[0];
+      const fileBuffer = fs.readFileSync(file.path);
+      const cloudUrl = await uploadToSupabase(fileBuffer, `magazines/${file.filename}`, 'application/pdf');
+      mag.pdfUrl = cloudUrl || `/uploads/${file.filename}`;
     }
     if (req.files.cover && req.files.cover[0]) {
-      mag.coverImage = `/uploads/${req.files.cover[0].filename}`;
+      const file = req.files.cover[0];
+      const fileBuffer = fs.readFileSync(file.path);
+      const cloudUrl = await uploadToSupabase(fileBuffer, `magazines/${file.filename}`, file.mimetype);
+      mag.coverImage = cloudUrl || `/uploads/${file.filename}`;
     }
   }
   if (isLatest === true || isLatest === 'true') {
@@ -989,13 +1134,15 @@ app.post('/api/admin/blogs/:id/action', requireAdmin, (req, res) => {
 });
 
 // Admin Gallery Upload
-app.post('/api/gallery/upload', requireAdmin, upload.single('image'), (req, res) => {
+app.post('/api/gallery/upload', requireAdmin, upload.single('image'), async (req, res) => {
   const { title, artist, category, description, gdriveUrl } = req.body;
   const data = readData();
 
   let finalUrl = '';
   if (req.file) {
-    finalUrl = `/uploads/${req.file.filename}`;
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const cloudUrl = await uploadToSupabase(fileBuffer, `gallery/${req.file.filename}`, req.file.mimetype);
+    finalUrl = cloudUrl || `/uploads/${req.file.filename}`;
   } else if (gdriveUrl) {
     finalUrl = convertGoogleDriveUrl(gdriveUrl);
   } else {
@@ -1097,8 +1244,73 @@ app.post('/api/admin/settings', requireAdmin, (req, res) => {
   if (typeof githubToken === 'string') {
     data.settings.githubToken = githubToken.trim();
   }
+  if (typeof req.body.supabaseUrl === 'string') {
+    data.settings.supabaseUrl = req.body.supabaseUrl.trim();
+  }
+  if (typeof req.body.supabaseKey === 'string') {
+    data.settings.supabaseKey = req.body.supabaseKey.trim();
+  }
+  if (typeof req.body.supabaseBucket === 'string') {
+    data.settings.supabaseBucket = req.body.supabaseBucket.trim();
+  }
   writeData(data);
   res.json({ success: true, settings: data.settings });
+});
+
+// Test & Sync Supabase Cloud Storage
+app.post('/api/admin/test-supabase', requireAdmin, async (req, res) => {
+  const { supabaseUrl, supabaseKey, supabaseBucket } = req.body;
+  const data = readData();
+
+  const targetUrl = (supabaseUrl || process.env.SUPABASE_URL || data.settings?.supabaseUrl || '').replace(/\/$/, '');
+  const targetKey = supabaseKey || process.env.SUPABASE_KEY || data.settings?.supabaseKey;
+  const targetBucket = supabaseBucket || process.env.SUPABASE_BUCKET || data.settings?.supabaseBucket || 'uday-storage';
+
+  if (!targetUrl || !targetKey) {
+    return res.status(400).json({ error: 'Supabase Project URL and API Key are required.' });
+  }
+
+  try {
+    // 1. Ensure bucket exists
+    await ensureSupabaseBucket(targetUrl, targetKey, targetBucket);
+
+    // 2. Perform test upload
+    const testBuffer = Buffer.from(JSON.stringify({ ping: 'ok', timestamp: Date.now() }), 'utf-8');
+    const uploadUrl = `${targetUrl}/storage/v1/object/${targetBucket}/system/test-ping.json`;
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'apikey': targetKey,
+        'Authorization': `Bearer ${targetKey}`,
+        'Content-Type': 'application/json',
+        'x-upsert': 'true'
+      },
+      body: testBuffer
+    });
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      return res.status(400).json({ error: `Supabase returned error: ${errText}` });
+    }
+
+    // 3. Save settings
+    if (!data.settings) data.settings = {};
+    data.settings.supabaseUrl = targetUrl;
+    data.settings.supabaseKey = targetKey;
+    data.settings.supabaseBucket = targetBucket;
+    writeData(data, true);
+
+    // 4. Immediately sync full data.json to Supabase
+    await syncDataToSupabase(data);
+
+    res.json({
+      success: true,
+      message: 'Supabase Cloud Storage is verified and active! Database backed up.',
+      publicBaseUrl: `${targetUrl}/storage/v1/object/public/${targetBucket}/`
+    });
+  } catch (err) {
+    res.status(500).json({ error: `Connection failed: ${err.message}` });
+  }
 });
 
 // GET /api/team - Public directory & contact info
@@ -1224,7 +1436,7 @@ app.post('/api/admin/announcements/:id/toggle', requireAdmin, (req, res) => {
 // --- Events Admin Endpoints ---
 
 // Create or update an Event (Upcoming or Past)
-app.post('/api/admin/events', requireAdmin, upload.any(), (req, res) => {
+app.post('/api/admin/events', requireAdmin, upload.any(), async (req, res) => {
   const {
     id, title, category, date, time, venue, description, badge, cta,
     status, attendees, link, linkText, imageUrl, type
@@ -1237,10 +1449,12 @@ app.post('/api/admin/events', requireAdmin, upload.any(), (req, res) => {
   if (!Array.isArray(data.events.upcoming)) data.events.upcoming = [];
   if (!Array.isArray(data.events.past)) data.events.past = [];
 
-  let finalImage = imageUrl ? imageUrl.trim() : '';
+  let finalImage = imageUrl ? convertGoogleDriveUrl(imageUrl.trim()) : '';
   const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
   if (uploadedFile) {
-    finalImage = `/uploads/${uploadedFile.filename}`;
+    const fileBuffer = fs.readFileSync(uploadedFile.path);
+    const cloudUrl = await uploadToSupabase(fileBuffer, `events/${uploadedFile.filename}`, uploadedFile.mimetype);
+    finalImage = cloudUrl || `/uploads/${uploadedFile.filename}`;
   }
   if (!finalImage) {
     finalImage = 'https://images.unsplash.com/photo-1544928147-79a2dbc1f389?w=800&auto=format&fit=crop&q=80';
@@ -1319,7 +1533,7 @@ app.post('/api/admin/events', requireAdmin, upload.any(), (req, res) => {
 });
 
 // Edit an existing Event
-app.put('/api/admin/events/:id', requireAdmin, upload.any(), (req, res) => {
+app.put('/api/admin/events/:id', requireAdmin, upload.any(), async (req, res) => {
   const { id } = req.params;
   const {
     title, category, date, time, venue, description, badge, cta,
@@ -1360,10 +1574,12 @@ app.put('/api/admin/events/:id', requireAdmin, upload.any(), (req, res) => {
   if (attendees !== undefined) existingEvent.attendees = attendees.trim();
   if (link !== undefined) existingEvent.link = link.trim();
   if (linkText !== undefined) existingEvent.linkText = linkText.trim();
-  if (imageUrl) existingEvent.image = imageUrl.trim();
+  if (imageUrl) existingEvent.image = convertGoogleDriveUrl(imageUrl.trim());
   const uploadedFile = (req.files && req.files.length > 0) ? req.files[0] : req.file;
   if (uploadedFile) {
-    existingEvent.image = `/uploads/${uploadedFile.filename}`;
+    const fileBuffer = fs.readFileSync(uploadedFile.path);
+    const cloudUrl = await uploadToSupabase(fileBuffer, `events/${uploadedFile.filename}`, uploadedFile.mimetype);
+    existingEvent.image = cloudUrl || `/uploads/${uploadedFile.filename}`;
   }
   existingEvent.updatedAt = new Date().toISOString();
 
@@ -1542,8 +1758,10 @@ if (fs.existsSync(CLIENT_DIST)) {
 }
 
 // Start Server listening on 0.0.0.0 for Render compatibility
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 UDAY Magazine Server is running on port ${PORT}`);
   console.log(`📡 Portal available at http://0.0.0.0:${PORT}`);
   console.log(`👤 Admin Username: udaymag25 | Notification Email: sayandeep.biswas04@gmail.com`);
+  // Automatically restore latest database data from Supabase Cloud Storage on startup
+  await restoreDataFromSupabase().catch(() => {});
 });

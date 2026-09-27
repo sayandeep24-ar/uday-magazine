@@ -5,7 +5,7 @@ import {
   PlusCircle, Download, RefreshCw, AlertCircle, CheckCircle2, Upload, FileText,
   Users, UserCheck, Edit3, Plus, Save, Phone, MapPin, Eye, EyeOff,
   Calendar, Bell, Sparkles, Bookmark, Search, Star, Copy, ChevronDown, ChevronUp,
-  SlidersHorizontal, Filter, MessageCircle, X
+  SlidersHorizontal, Filter, MessageCircle, X, Cloud, Database, Server, HardDrive
 } from 'lucide-react';
 import { GalleryItem } from '../components/ImageGallerySection';
 import { EDITORIAL_BOARD, TeamAndContact, LeadTeamMember } from '../data/publicationData';
@@ -135,6 +135,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
   const [githubTokenInput, setGithubTokenInput] = useState('');
   const [savingGithubToken, setSavingGithubToken] = useState(false);
   const [githubSyncMsg, setGithubSyncMsg] = useState('');
+  // Supabase Cloud Storage State
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState('');
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState('');
+  const [supabaseBucketInput, setSupabaseBucketInput] = useState('uday-storage');
+  const [testingSupabase, setTestingSupabase] = useState(false);
+  const [supabaseMsg, setSupabaseMsg] = useState<{ text: string; isError: boolean } | null>(null);
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
  
   // Directory, Faculty Advisor, and Team Management state
   const [teamData, setTeamData] = useState<TeamAndContact>(EDITORIAL_BOARD);
@@ -261,6 +268,18 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
         }
         if (data.settings?.githubToken) {
           setGithubTokenInput(data.settings.githubToken);
+        }
+        if (data.settings?.supabaseUrl) {
+          setSupabaseUrlInput(data.settings.supabaseUrl);
+        }
+        if (data.settings?.supabaseKey) {
+          setSupabaseKeyInput(data.settings.supabaseKey);
+        }
+        if (data.settings?.supabaseBucket) {
+          setSupabaseBucketInput(data.settings.supabaseBucket);
+        }
+        if (data.settings?.supabaseUrl && data.settings?.supabaseKey) {
+          setSupabaseConnected(true);
         }
       }
 
@@ -691,6 +710,36 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
 
   const handleDownloadBackup = () => {
     window.open('/api/admin/backup-data', '_blank');
+  };
+
+  // Supabase Cloud Storage & Sync Handler
+  const handleSaveSupabase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestingSupabase(true);
+    setSupabaseMsg(null);
+    try {
+      const res = await fetch('/api/admin/test-supabase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          supabaseUrl: supabaseUrlInput.trim(),
+          supabaseKey: supabaseKeyInput.trim(),
+          supabaseBucket: (supabaseBucketInput || 'uday-storage').trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to connect to Supabase');
+      setSupabaseMsg({ text: data.message || 'Supabase Connected & Database Synced!', isError: false });
+      setSupabaseConnected(true);
+    } catch (err: any) {
+      setSupabaseMsg({ text: err.message || 'Connection error', isError: true });
+      setSupabaseConnected(false);
+    } finally {
+      setTestingSupabase(false);
+    }
   };
 
   // Blog Actions
@@ -2710,7 +2759,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                         </div>
 
                         <div className="sm:col-span-2 lg:col-span-3">
-                          <label className="block text-xs font-bold text-uday-midnight mb-1">Event Cover Image (Upload or Web URL)</label>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            Event Cover Image (Upload or Web / Google Drive Link)
+                          </label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="flex items-center gap-2">
                               <input
@@ -2727,13 +2778,16 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                             <div>
                               <input
                                 type="url"
-                                placeholder="Or paste image URL (https://...)"
+                                placeholder="Paste image URL or Google Drive share link..."
                                 value={eventImageUrl}
                                 onChange={e => setEventImageUrl(e.target.value)}
                                 className="w-full bg-[#FAF7F2] border border-uday-peach/60 rounded-xl px-3.5 py-2 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson"
                               />
                             </div>
                           </div>
+                          <p className="text-[11px] text-uday-midnight/60 mt-1">
+                            💡 Supports direct web URLs or <strong>Google Drive share links</strong> (set access to &quot;Anyone with the link can view&quot;). Uploaded files automatically upload to <strong>Supabase Cloud CDN</strong> when configured.
+                          </p>
                         </div>
 
                         <div className="sm:col-span-2 lg:col-span-3">
@@ -3571,69 +3625,211 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onRefreshGlobalData }) => 
                     </form>
                   )}
 
-                  {/* DATA PERSISTENCE & GITHUB AUTO-SYNC CARD */}
-                  <div className="bg-[#FAF7F2] p-6 rounded-2xl border border-uday-peach/50 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-uday-crimson/10 text-uday-crimson flex items-center justify-center font-bold shrink-0">
-                        <Download className="w-5 h-5 text-uday-crimson" />
+                  {/* SUPABASE CLOUD STORAGE & DATA PERSISTENCE CARD */}
+                  <div className="bg-[#FAF7F2] p-6 rounded-2xl border border-uday-peach/50 space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-uday-peach/40">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-uday-crimson/10 text-uday-crimson flex items-center justify-center font-bold shrink-0">
+                          <Cloud className="w-5 h-5 text-uday-crimson" />
+                        </div>
+                        <div>
+                          <h4 className="font-serif font-bold text-base text-uday-midnight">
+                            Supabase Cloud Storage & Permanent Persistence
+                          </h4>
+                          <p className="text-xs text-uday-midnight/70">
+                            Permanent CDN storage for images/PDFs and automatic database state sync.
+                          </p>
+                        </div>
                       </div>
+
+                      {/* Live Cloud Status Badge */}
                       <div>
-                        <h4 className="font-serif font-bold text-base text-uday-midnight">Cloud Persistence & Database Backup</h4>
-                        <p className="text-xs text-uday-midnight/70">
-                          Prevent Render free-tier data loss when the web service spins down or restarts.
-                        </p>
+                        {supabaseConnected ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                            🟢 Supabase Connected (Permanent Cloud CDN)
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                            ⚠️ Render Ephemeral Storage (Sleeps after 15m)
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {githubSyncMsg && (
-                      <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>{githubSyncMsg}</span>
+                    {supabaseMsg && (
+                      <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 ${
+                        supabaseMsg.isError
+                          ? 'bg-rose-50 border border-rose-200 text-rose-800'
+                          : 'bg-emerald-50 border border-emerald-300 text-emerald-800'
+                      }`}>
+                        {supabaseMsg.isError ? (
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        ) : (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        )}
+                        <span>{supabaseMsg.text}</span>
                       </div>
                     )}
 
-                    <div className="text-xs text-uday-midnight/70 space-y-2">
-                      <p>
-                        On Render's free tier, the file system resets when the server goes to sleep after 15 minutes of inactivity. To ensure your magazine uploads, events, announcements, and directory changes <strong>persist permanently</strong>:
+                    <div className="text-xs text-uday-midnight/75 leading-relaxed space-y-1.5 bg-white/70 p-4 rounded-xl border border-uday-peach/40">
+                      <p className="font-semibold text-uday-crimson">
+                        Why is this needed on Render?
                       </p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li><strong>Option A: GitHub Auto-Sync:</strong> Enter your GitHub Personal Access Token (repo scope). Any change will automatically be committed to your repository's <code>server/data.json</code> file.</li>
-                        <li><strong>Option B: 1-Click Backup:</strong> Download your live <code>data.json</code> directly to your computer at any time.</li>
-                      </ul>
+                      <p>
+                        Render's free tier spins down the container into sleep mode after 15 minutes of inactivity. When it wakes up, Render resets the filesystem back to the original GitHub commit, which erases local disk uploads and resets newly added events or announcements.
+                      </p>
+                      <p>
+                        With <strong>Supabase Cloud Storage</strong> configured, newly uploaded event banners, gallery photos, and magazine PDFs are instantly stored on Supabase's high-speed CDN, and <code>data.json</code> is backed up in the cloud on every change and restored automatically on wake-up!
+                      </p>
                     </div>
 
-                    {/* GitHub Sync Form */}
-                    <form onSubmit={handleSaveGithubToken} className="space-y-3 pt-2">
-                      <div>
-                        <label className="block text-xs font-bold text-uday-midnight mb-1">GitHub Personal Access Token (PAT)</label>
-                        <input
-                          type="password"
-                          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                          value={githubTokenInput}
-                          onChange={e => setGithubTokenInput(e.target.value)}
-                          className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
-                        />
+                    {/* Supabase Connection Form */}
+                    <form onSubmit={handleSaveSupabase} className="space-y-4 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            Supabase Project URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://xyzcompany.supabase.co"
+                            value={supabaseUrlInput}
+                            onChange={e => setSupabaseUrlInput(e.target.value)}
+                            className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            Supabase API Key (Anon or Service Role)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            value={supabaseKeyInput}
+                            onChange={e => setSupabaseKeyInput(e.target.value)}
+                            className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            Storage Bucket Name
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="uday-storage"
+                            value={supabaseBucketInput}
+                            onChange={e => setSupabaseBucketInput(e.target.value)}
+                            className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                          />
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+
+                      <div className="flex flex-wrap items-center gap-3">
                         <button
                           type="submit"
-                          disabled={savingGithubToken}
-                          className="px-5 py-2.5 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                          disabled={testingSupabase}
+                          className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
                         >
-                          <RefreshCw className={`w-3.5 h-3.5 ${savingGithubToken ? 'animate-spin' : ''}`} />
-                          <span>{savingGithubToken ? 'Saving & Syncing...' : 'Save Token & Sync to GitHub'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={handleDownloadBackup}
-                          className="px-5 py-2.5 bg-white border border-uday-peach/70 hover:bg-uday-cream text-uday-midnight rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
-                        >
-                          <Download className="w-3.5 h-3.5 text-uday-crimson" />
-                          <span>Download data.json Backup</span>
+                          <RefreshCw className={`w-3.5 h-3.5 ${testingSupabase ? 'animate-spin' : ''}`} />
+                          <span>{testingSupabase ? 'Connecting & Syncing...' : 'Save & Test Supabase Connection'}</span>
                         </button>
                       </div>
                     </form>
+
+                    {/* Quick 3-Step Setup Instructions */}
+                    <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-2 text-xs text-amber-950">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Quick 2-Minute Free Supabase Setup:</span>
+                      </div>
+                      <ol className="list-decimal pl-5 space-y-1 text-amber-900/90 leading-relaxed">
+                        <li>
+                          Sign up at <a href="https://supabase.com" target="_blank" rel="noreferrer" className="underline font-bold text-amber-900 hover:text-amber-700">supabase.com</a> (100% free) and click <strong>New Project</strong>.
+                        </li>
+                        <li>
+                          In your project dashboard, navigate to <strong>Storage</strong> → Click <strong>New Bucket</strong> → Name it <code>uday-storage</code> → Switch <strong>Public bucket</strong> to <span className="font-bold text-emerald-800">ON</span> → Click Save.
+                        </li>
+                        <li>
+                          Navigate to <strong>Project Settings → API</strong>. Copy the <strong>Project URL</strong> and <strong>anon public</strong> (or service_role) key, paste them above, and click <strong>Save & Test Supabase Connection</strong>!
+                        </li>
+                      </ol>
+                    </div>
+
+                    {/* Google Drive Link Integration Card */}
+                    <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200/80 space-y-2 text-xs text-blue-950">
+                      <div className="font-bold flex items-center gap-1.5 text-blue-900">
+                        <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Alternative: Google Drive Direct Link Support</span>
+                      </div>
+                      <p className="text-blue-900/85 leading-relaxed">
+                        Don&apos;t want to set up Supabase right now? You can also host your event posters, magazines, and gallery images on <strong>Google Drive</strong>:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1 text-blue-900/85">
+                        <li>Upload your image or PDF to Google Drive, right-click and click <strong>Share</strong>.</li>
+                        <li>Change access from &quot;Restricted&quot; to <strong>&quot;Anyone with the link can view&quot;</strong>.</li>
+                        <li>Copy the share link (e.g. <code>https://drive.google.com/file/d/1aBcDeF.../view?usp=sharing</code>) and paste it into any image/PDF URL field on this portal.</li>
+                        <li>Our system automatically converts it into a high-speed, direct CDN thumbnail or preview embed!</li>
+                      </ul>
+                    </div>
+
+                    {/* GitHub Repo Sync & Manual Backup */}
+                    <div className="pt-4 border-t border-uday-peach/40 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Database className="w-4 h-4 text-uday-crimson" />
+                        <h5 className="font-bold text-xs uppercase tracking-wider text-uday-midnight">
+                          Secondary Backup: GitHub Repository Auto-Sync & Manual Download
+                        </h5>
+                      </div>
+
+                      {githubSyncMsg && (
+                        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>{githubSyncMsg}</span>
+                        </div>
+                      )}
+
+                      <p className="text-xs text-uday-midnight/70">
+                        You can also sync all site data to your GitHub repository or download a local JSON backup at any time.
+                      </p>
+
+                      <form onSubmit={handleSaveGithubToken} className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-uday-midnight mb-1">
+                            GitHub Personal Access Token (PAT with repo scope)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                            value={githubTokenInput}
+                            onChange={e => setGithubTokenInput(e.target.value)}
+                            className="w-full bg-white border border-uday-peach/60 rounded-xl px-4 py-2.5 text-xs text-uday-midnight focus:outline-none focus:border-uday-crimson font-mono"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="submit"
+                            disabled={savingGithubToken}
+                            className="px-5 py-2.5 bg-uday-midnight hover:bg-uday-crimson text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                          >
+                            <RefreshCw className={`w-3.5 h-3.5 ${savingGithubToken ? 'animate-spin' : ''}`} />
+                            <span>{savingGithubToken ? 'Saving & Syncing...' : 'Save Token & Sync to GitHub'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleDownloadBackup}
+                            className="px-5 py-2.5 bg-white border border-uday-peach/70 hover:bg-uday-cream text-uday-midnight rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                          >
+                            <Download className="w-3.5 h-3.5 text-uday-crimson" />
+                            <span>Download data.json Backup</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   </div>
                 </div>
               )}
